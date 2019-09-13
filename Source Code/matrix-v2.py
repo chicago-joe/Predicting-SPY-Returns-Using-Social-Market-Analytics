@@ -216,24 +216,36 @@ def meanclosetable(ticker,df):
         if sum(price.index==timedata)==1:
             df[ticker][timedata].append(price.loc[timedata][4])
     newtime = time.time()
-    print('read data time: %.3f' % (
+    print('update data time: %.3f' % (
         newtime - oldtime
     ))
     return df
 
-
+def submeanclosetableonly(tickerlist,df):
+    newdf={}
+    for ticker in tickerlist: 
+        newdf[ticker] = dict((k, v) for k, v in df[ticker].items() if len(v) >= 17)
+    return newdf
 
 fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'])
 
-# dfout=meantable(fullpathlist)
-
-# savedata(dfout)
+#dfout=meantable(fullpathlist)
+       
+#savedata(dfout)
 
 df=readdata('./meantable2.txt')
-print("Rain is so smart")
-# df=meanclosetable('AAXJ',df)
-#
-# for ticker in df:
+
+tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','VOX']
+
+for ticker in tickerlist: 
+    df=meanclosetable(ticker,df)
+
+newdf=submeanclosetableonly(tickerlist,df)
+
+newdf2=pd.DataFrame.from_dict(newdf['XLK'])
+
+newdf2=newdf2.transpose()
+#for ticker in df:
 #    df=meanclosetable(ticker,df)
 
 
