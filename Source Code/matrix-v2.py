@@ -10,13 +10,19 @@ import time
 import numpy as np 
 from yahoo_historical import Fetcher
 
-def readfilepath(REPORT_PATH):
+def readfilepath(REPORT_PATH,limit=[]):
     filelist=[[],[],[]]
     fullpathlist=[[],[],[]]
     
     for i in range(len(REPORT_PATH)):
         for dirpath, dirnames, filenames in os.walk(REPORT_PATH[i]):
             for file in filenames:
+                if len(limit)!=0:
+                    ticker=file.split('.')[0]
+                    if ticker not in limit:
+                        #print(ticker)
+
+                        continue 
                 filelist[i].append(file)
                 fullpath = os.path.join(dirpath, file)
                 fullpathlist[i].append(fullpath)
@@ -47,7 +53,7 @@ def meantable(fullpathlist):
                 tempdata=tempdata.set_index(pd.to_datetime(tempdata['date']))
                 tickerkey=tempdata['ticker'][0]
                 if dfout.get(tickerkey):
-                    tempticker=''
+                    tempticker=tickerkey
                     dfout[tickerkey]+=1
                 else:
                     tempticker=tickerkey
@@ -66,6 +72,48 @@ def meantable(fullpathlist):
         ))
     return dfout
 
+
+def meantable12ticker(fullpathlist):
+    f1 = open('./meantable12ticker.txt', 'w')
+    f1.write('')
+    f1.close()
+    totalfilecount=0
+    for i in range(len(fullpathlist)):
+        totalfilecount+=len(fullpathlist[i])
+    count=0
+    oldtime = time.time()
+    dfout = {'init':-1}
+    timekey=''
+    tickerkey=''
+    for i in range(len(fullpathlist)):
+        for j in range(len(fullpathlist[i])):
+            count+=1
+            print('percent: %.3f' % (
+                    count/totalfilecount*100
+                ))
+            tempdata=pd.read_csv(fullpathlist[i][j], sep="\t",skiprows=5)
+            if len(tempdata['ticker'])>0 :
+                tempdata=tempdata.set_index(pd.to_datetime(tempdata['date']))
+                tickerkey=tempdata['ticker'][0]
+                if dfout.get(tickerkey):
+                    tempticker=tickerkey
+                    dfout[tickerkey]+=1
+                else:
+                    tempticker=tickerkey
+                    dfout[tickerkey]=1
+
+                datelist=(np.unique(np.array([pd.to_datetime(date).date() for date in tempdata.date]))) 
+                for k in ((datelist)):
+                    tempout=tempdata[str(k)].mean()
+                    tempout['date']=str(k)
+                    adddata('./meantable12ticker.txt',tempticker,tempout)
+                    tempticker=''
+        
+    newtime = time.time()
+    print('mean table use: %.3fs' % (
+            newtime - oldtime
+        ))
+    return dfout
 
 def alltable(fullpathlist):
     f1 = open('./alltable2.txt', 'w')
@@ -174,7 +222,7 @@ def readdata(filename):
     s = f.read()
     f.close()
     ticker = s.split('\n')
-    dfout = {'init':-1} 
+    dfout = {} 
     itercars = iter(ticker)
     next(itercars)
     for tickerdata in itercars:
@@ -184,7 +232,7 @@ def readdata(filename):
         if dfout.get(namesplit[0]):
             tickerout=dfout[namesplit[0]]
         else:
-            tickerout = {'init':-1}
+            tickerout = {}
         datesdata = namesplit[1].split('/')
         
         for datedata in datesdata:
@@ -195,9 +243,7 @@ def readdata(filename):
             datename=dataout[len(dataout)-1]
             
             tickerout[datename]=dataout
-        del tickerout['init']
         dfout[tickername]=tickerout
-    del dfout['init']
 
     newtime = time.time()
     print('read data time: %.3f' % (
@@ -230,12 +276,18 @@ def submeanclosetableonly(tickerlist,df):
 fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'])
 
 #dfout=meantable(fullpathlist)
+
        
 #savedata(dfout)
 
 df=readdata('./meantable2.txt')
 
 tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','VOX']
+
+fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
+dfout=meantable12ticker(fullpathlist)
+
+df=readdata('./meantable12ticker.txt')
 
 for ticker in tickerlist: 
     df=meanclosetable(ticker,df)
