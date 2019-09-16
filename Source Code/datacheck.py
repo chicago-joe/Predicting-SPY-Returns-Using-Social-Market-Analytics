@@ -37,7 +37,7 @@ def readfilepath(REPORT_PATH):
     return fullpathlist,filelist
 
 def checkcolname(fullpathlist):
-    colname=readcolname('./2015/AAXJ.txt')
+    colname=readcolname('./data/2015/AAXJ.txt')
     differentcol=0
     for i in range(len(fullpathlist)):
         for j in range(len(fullpathlist[i])):
@@ -46,7 +46,7 @@ def checkcolname(fullpathlist):
     return differentcol
 
 def countNA(fullpathlist):
-    sumlist = pd.read_csv('./2015/AAXJ.txt', sep="\t",skiprows=5).isna().sum()
+    sumlist = pd.read_csv('./data/2015/AAXJ.txt', sep="\t",skiprows=5).isna().sum()
     for i in range(len(fullpathlist)):
         for j in range(len(fullpathlist[i])):
             sumlist+=(pd.read_csv(fullpathlist[i][j], sep="\t",skiprows=5)).isna().sum()
@@ -65,7 +65,7 @@ def findoverlap(filelist):
                 maplist[filelist[i][j]]=1
     return maplist, maxlist
 
-fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'])
+fullpathlist,filelist=readfilepath(['./data/2015/','./data/2016/','./data/2017/'])
 
 print("Number of different col = ",checkcolname(fullpathlist))
 

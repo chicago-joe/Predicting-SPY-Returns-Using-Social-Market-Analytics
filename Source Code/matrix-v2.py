@@ -181,7 +181,7 @@ def alltable(fullpathlist):
 
 def savedata(dfout):
     oldtime = time.time()
-    f1 = open('./meantable.txt', 'w')
+    f1 = open('./meantable2.txt', 'w')
     for i in ((dfout)):
 
         if i != 'init':
@@ -273,7 +273,7 @@ def submeanclosetableonly(tickerlist,df):
         newdf[ticker] = dict((k, v) for k, v in df[ticker].items() if len(v) >= 17)
     return newdf
 
-fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'])
+fullpathlist,filelist=readfilepath(['./data/2015/','./data/2016/','./data/2017/'])
 
 #dfout=meantable(fullpathlist)
 
@@ -284,7 +284,7 @@ df=readdata('./meantable2.txt')
 
 tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','VOX']
 
-fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
+fullpathlist,filelist=readfilepath(['./data/2015/','./data/2016/','./data/2017/'],tickerlist)
 dfout=meantable12ticker(fullpathlist)
 
 df=readdata('./meantable12ticker.txt')
