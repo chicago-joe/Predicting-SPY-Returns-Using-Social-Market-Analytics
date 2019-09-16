@@ -285,7 +285,7 @@ df=readdata('./meantable2.txt')
 tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','VOX']
 
 fullpathlist,filelist=readfilepath(['./data/2015/','./data/2016/','./data/2017/'],tickerlist)
-dfout=meantable12ticker(fullpathlist)
+# dfout=meantable12ticker(fullpathlist)
 
 df=readdata('./meantable12ticker.txt')
 
