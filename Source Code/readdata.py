@@ -8,7 +8,7 @@ import os
 import pandas as pd
 import time
 import numpy as np 
-from yahoo_historical import Fetcher
+#from yahoo_historical import Fetcher
 
 
 def readdata(filename):
@@ -69,51 +69,27 @@ def submeanclosetableonly(tickerlist,df):
 
 
 def datainsight(tickerlist,df):
-    for ticker in tickerlist: 
-        df=meanclosetable(ticker,df)
-    newdf=submeanclosetableonly(tickerlist,df)
+    #for ticker in tickerlist: 
+    #    df=meanclosetable(ticker,df)
+    #newdf=submeanclosetableonly(tickerlist,df)
+    allticker={}
     
-    
     for ticker in tickerlist: 
-        singleticker=pd.DataFrame.from_dict(newdf[ticker])
+        singleticker=pd.DataFrame.from_dict(df[ticker])
         singleticker=singleticker.transpose()
-        col_names=('raw_s','raw_s_mean','raw_volatility','raw_score','s','s_mean','s_volatility','s_score','s_volume','sv_mean','sv_volatility','sv_score','s_dispersion','s_buzz','s_delta','date','price')
+        col_names=('raw_s','raw_s_mean','raw_volatility','raw_score','s','s_mean','s_volatility','s_score','s_volume','sv_mean','sv_volatility','sv_score','s_dispersion','s_buzz','s_delta','date')
         
         singleticker.columns=col_names
         for names in col_names:
             if names!= 'date':
                 singleticker[names] = singleticker[names].astype(float)
-        
-        ##XLP has a interesting graph though.
-        #for col in col_names[:-2]:
-        for col in ['raw_s','raw_s_mean','s_buzz']:
-            '''
-            play with the data
-            
-            fig, ax1 = plt.subplots()
-            
-            color = 'tab:red'
-            ax1.set_xlabel(ticker)
-            ax1.set_ylabel(col, color=color)
-            ax1.plot(singleticker[col], color=color)
-            ax1.tick_params(axis='y', labelcolor=color)
-            
-            ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-            
-            color = 'tab:blue'
-            ax2.set_ylabel(ticker+' price', color=color)  # we already handled the x-label with ax1
-            ax2.plot(singleticker['price'], color=color)
-            ax2.tick_params(axis='y', labelcolor=color)
-            
-            fig.tight_layout()  # otherwise the right y-label is slightly clipped
-            plt.xticks(np.arange(0,len(singleticker[col]),20.0))
-            
-            plt.show()
-            '''
+        allticker[ticker]=singleticker
+    return allticker
+       
 
 df=readdata('./meantable12ticker.txt')
 
 
-tickerlist=['XLK','XLF','XLY']
+tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','VOX','SPY']
 
-datainsight(tickerlist,df)
+etfsmean=datainsight(tickerlist,df)
