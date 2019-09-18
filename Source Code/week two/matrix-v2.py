@@ -89,7 +89,7 @@ def meantable(fullpathlist):
 
                 datelist=(np.unique(np.array([pd.to_datetime(date).date() for date in tempdata.date]))) 
                 for k in ((datelist)):
-                    tempout=tempdata[str(k)].mean()
+                    tempout=tempdata[str(k)+' 09:29:59':str(k)+' 16:00:01'].mean()
                     tempout['date']=str(k)
                     adddata('./meantable2.txt',tempticker,tempout)
                     tempticker=''
@@ -145,7 +145,7 @@ def meantable12ticker(fullpathlist):
 
                 datelist=(np.unique(np.array([pd.to_datetime(date).date() for date in tempdata.date]))) 
                 for k in ((datelist)):
-                    tempout=tempdata[str(k)].mean()
+                    tempout=tempdata[str(k)+' 09:29:59':str(k)+' 16:00:01'].mean()
                     tempout['date']=str(k)
                     adddata('./meantable12ticker.txt',tempticker,tempout)
                     tempticker=''
@@ -370,7 +370,7 @@ df=readdata('./meantable2.txt')
 
 tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','VOX','SPY']
 fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
-#dfout=meantable12ticker(fullpathlist)
+dfout=meantable12ticker(fullpathlist)
 df=readdata('./meantable12ticker.txt')
 
 #for ticker in tickerlist: 
