@@ -370,7 +370,7 @@ df=readdata('./meantable2.txt')
 
 tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','VOX','SPY']
 fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
-dfout=meantable12ticker(fullpathlist)
+#dfout=meantable12ticker(fullpathlist)
 df=readdata('./meantable12ticker.txt')
 
 #for ticker in tickerlist: 
