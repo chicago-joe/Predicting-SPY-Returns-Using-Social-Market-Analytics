@@ -130,6 +130,9 @@ def datatrans(tickerlist,df):
     allticker={}
     
     for ticker in tickerlist: 
+        singleticker=df[ticker]
+        if singleticker.get('nan'):
+            del singleticker['nan']
         singleticker=pd.DataFrame.from_dict(df[ticker])
         singleticker=singleticker.transpose()
         col_names=('raw_s','raw_s_mean','raw_volatility','raw_score','s','s_mean','s_volatility','s_score','s_volume','sv_mean','sv_volatility','sv_score','s_dispersion','s_buzz','s_delta','date')
