@@ -83,7 +83,7 @@ def datainsight(tickerlist,df):
         for names in col_names:
             if names!= 'date':
                 singleticker[names] = singleticker[names].astype(float)
-        
+        return singleticker
         ##XLP has a interesting graph though.
         #for col in col_names[:-2]:
         for col in ['raw_s','raw_s_mean','s_buzz']:
@@ -111,9 +111,8 @@ def datainsight(tickerlist,df):
             plt.show()
             '''
 
-df=readdata('./meantable12ticker.txt')
+df_12ticker=readdata('./meantable12ticker.txt')
+df_alldata=readdata('./alldata.txt')
 
 
-tickerlist=['XLK','XLF','XLY']
-
-datainsight(tickerlist,df)
+# datainsight(tickerlist,df)
