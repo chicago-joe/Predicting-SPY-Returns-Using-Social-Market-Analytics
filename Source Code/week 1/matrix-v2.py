@@ -8,7 +8,7 @@ import os
 import pandas as pd
 import time
 import numpy as np 
-from yahoo_historical import Fetcher
+#from yahoo_historical import Fetcher
 
 def readfilepath(REPORT_PATH,limit=[]):
     filelist=[[],[],[]]
@@ -282,21 +282,26 @@ fullpathlist,filelist=readfilepath(['./data/2015/','./data/2016/','./data/2017/'
 
 df=readdata('./meantable2.txt')
 
-tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','VOX']
+tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','VOX','SPY']
 
+<<<<<<< HEAD:Source Code/matrix-v2.py
 fullpathlist,filelist=readfilepath(['./data/2015/','./data/2016/','./data/2017/'],tickerlist)
 # dfout=meantable12ticker(fullpathlist)
+=======
+fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
+#dfout=meantable12ticker(fullpathlist)
+>>>>>>> Rain:Source Code/week 1/matrix-v2.py
 
 df=readdata('./meantable12ticker.txt')
 
-for ticker in tickerlist: 
-    df=meanclosetable(ticker,df)
+#for ticker in tickerlist: 
+#    df=meanclosetable(ticker,df)
 
-newdf=submeanclosetableonly(tickerlist,df)
+#newdf=submeanclosetableonly(tickerlist,df)
 
-newdf2=pd.DataFrame.from_dict(newdf['XLK'])
+#newdf2=pd.DataFrame.from_dict(newdf['XLK'])
 
-newdf2=newdf2.transpose()
+#newdf2=newdf2.transpose()
 #for ticker in df:
 #    df=meanclosetable(ticker,df)
 

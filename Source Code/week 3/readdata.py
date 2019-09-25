@@ -4,13 +4,24 @@ Created on Mon Sep  9 21:35:50 2019
 
 @author: duany
 """
-import os
 import pandas as pd
 import time
-import numpy as np 
-from yahoo_historical import Fetcher
+#from yahoo_historical import Fetcher
 
-
+'''
+function
+=============
+read data form file
+=============
+input
+=============
+#filename:     the file name
+=============
+output
+=============
+#dfout:        3D dict data [ticker][date][colnumber]
+=============
+'''
 def readdata(filename):
     oldtime = time.time()
     f = open(filename)
@@ -47,6 +58,21 @@ def readdata(filename):
     oldtime = time.time()
     return dfout
 
+'''
+function
+=============
+add price of the etf to the data
+=============
+input
+=============
+#ticker:       the ticker name
+#df:           the data need edit
+=============
+output
+=============
+#df:           the data after edit
+=============
+'''
 def meanclosetable(ticker,df):
     oldtime = time.time()
 
@@ -61,58 +87,67 @@ def meanclosetable(ticker,df):
     ))
     return df
 
+'''
+function
+=============
+select the date that has both factor and price
+=============
+input
+=============
+#tickerlist:   the ticker name list
+#df:           the data need edit
+=============
+output
+=============
+#newdf:        the data after edit
+=============
+'''
 def submeanclosetableonly(tickerlist,df):
     newdf={}
     for ticker in tickerlist: 
         newdf[ticker] = dict((k, v) for k, v in df[ticker].items() if len(v) >= 17)
     return newdf
 
-
-def datainsight(tickerlist,df):
-    for ticker in tickerlist: 
-        df=meanclosetable(ticker,df)
-    newdf=submeanclosetableonly(tickerlist,df)
+'''
+function
+=============
+make data easier to use
+=============
+input
+=============
+#tickerlist:   the ticker name list
+#df:           the data need edit
+=============
+output
+=============
+#allticker:    the data after edit
+=============
+'''
+def datatrans(tickerlist,df):
+    #for ticker in tickerlist: 
+    #    df=meanclosetable(ticker,df)
+    #newdf=submeanclosetableonly(tickerlist,df)
+    allticker={}
     
-    
     for ticker in tickerlist: 
-        singleticker=pd.DataFrame.from_dict(newdf[ticker])
+        singleticker=df[ticker]
+        if singleticker.get('nan'):
+            del singleticker['nan']
+        singleticker=pd.DataFrame.from_dict(df[ticker])
         singleticker=singleticker.transpose()
-        col_names=('raw_s','raw_s_mean','raw_volatility','raw_score','s','s_mean','s_volatility','s_score','s_volume','sv_mean','sv_volatility','sv_score','s_dispersion','s_buzz','s_delta','date','price')
+        col_names=('raw_s','raw_s_mean','raw_volatility','raw_score','s','s_mean','s_volatility','s_score','s_volume','sv_mean','sv_volatility','sv_score','s_dispersion','s_buzz','s_delta','raw_s_wave','raw_s_skew','raw_s_kurt','raw_score_wave','raw_score_skew','raw_score_kurt','s_wave','s_skew','s_kurt','date')
         
         singleticker.columns=col_names
         for names in col_names:
             if names!= 'date':
                 singleticker[names] = singleticker[names].astype(float)
-        return singleticker
-        ##XLP has a interesting graph though.
-        #for col in col_names[:-2]:
-        for col in ['raw_s','raw_s_mean','s_buzz']:
-            '''
-            play with the data
-            
-            fig, ax1 = plt.subplots()
-            
-            color = 'tab:red'
-            ax1.set_xlabel(ticker)
-            ax1.set_ylabel(col, color=color)
-            ax1.plot(singleticker[col], color=color)
-            ax1.tick_params(axis='y', labelcolor=color)
-            
-            ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-            
-            color = 'tab:blue'
-            ax2.set_ylabel(ticker+' price', color=color)  # we already handled the x-label with ax1
-            ax2.plot(singleticker['price'], color=color)
-            ax2.tick_params(axis='y', labelcolor=color)
-            
-            fig.tight_layout()  # otherwise the right y-label is slightly clipped
-            plt.xticks(np.arange(0,len(singleticker[col]),20.0))
-            
-            plt.show()
-            '''
+        allticker[ticker]=singleticker
+    return allticker
+       
 
-df_12ticker=readdata('./meantable12ticker.txt')
-df_alldata=readdata('./alldata.txt')
+df=readdata('./meantable12ticker.txt')
 
 
-# datainsight(tickerlist,df)
+tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','SPY']
+
+etfsmean=datatrans(tickerlist,df)
