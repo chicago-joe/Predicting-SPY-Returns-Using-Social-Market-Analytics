@@ -438,7 +438,7 @@ def submeanclosetableonly(tickerlist,df):
 
 fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'])
 
-dfout=meantable(fullpathlist)
+#dfout=meantable(fullpathlist)
 df=readdata('./meantable2.txt')
 
 tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','SPY']
