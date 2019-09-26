@@ -1,0 +1,13 @@
+,raw_s,raw_s_mean,raw_volatility,raw_score,s,s_mean,s_volatility,s_score,s_volume,sv_mean,sv_volatility,sv_score,s_dispersion,s_buzz,s_delta,Return
+XLK,True,False,False,True,True,False,False,True,True,True,True,True,True,True,True,True
+XLV,True,True,False,True,True,True,False,True,True,True,True,True,True,True,True,True
+XLF,True,True,False,True,True,True,False,True,True,True,True,True,False,True,True,True
+XLY,True,False,False,True,True,True,False,True,True,True,True,True,True,True,True,True
+XLI,True,True,False,True,True,True,False,True,True,True,True,True,True,True,True,True
+XLP,True,False,False,True,True,False,False,True,True,False,False,True,True,True,True,True
+XLE,True,False,False,True,True,False,False,True,False,False,False,True,True,True,True,True
+XLU,True,False,False,True,True,False,False,True,True,False,False,True,True,True,True,True
+VNQ,True,True,False,True,True,True,False,True,True,False,True,True,True,True,True,True
+GDX,True,False,False,True,True,False,False,True,False,False,False,True,True,True,True,True
+VOX,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True,True
+SPY,False,False,False,True,False,False,False,True,False,False,False,True,False,True,True,True
