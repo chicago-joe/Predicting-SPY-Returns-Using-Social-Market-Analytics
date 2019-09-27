@@ -2,6 +2,9 @@ from readdata import *
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+output_csv = '../Source Code/s_volume_analysis'
 
 def maketable(data):
 
