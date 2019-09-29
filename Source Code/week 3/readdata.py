@@ -6,7 +6,7 @@ Created on Mon Sep  9 21:35:50 2019
 """
 import pandas as pd
 import time
-#from yahoo_historical import Fetcher
+from yahoo_historical import Fetcher
 
 '''
 function
@@ -136,14 +136,14 @@ def datatrans(tickerlist,df):
         singleticker=pd.DataFrame.from_dict(df[ticker])
         singleticker=singleticker.transpose()
         col_names=('raw_s','raw_s_mean','raw_volatility','raw_score','s','s_mean','s_volatility','s_score','s_volume','sv_mean','sv_volatility','sv_score','s_dispersion','s_buzz','s_delta','raw_s_wave','raw_s_skew','raw_s_kurt','raw_score_wave','raw_score_skew','raw_score_kurt','s_wave','s_skew','s_kurt','date')
-        
+
         singleticker.columns=col_names
         for names in col_names:
             if names!= 'date':
                 singleticker[names] = singleticker[names].astype(float)
         allticker[ticker]=singleticker
     return allticker
-       
+
 
 df=readdata('./meantable12ticker.txt')
 
@@ -151,3 +151,4 @@ df=readdata('./meantable12ticker.txt')
 tickerlist=['XLK','XLV','XLF','XLY','XLI','XLP','XLE','XLU','VNQ','GDX','SPY']
 
 etfsmean=datatrans(tickerlist,df)
+
