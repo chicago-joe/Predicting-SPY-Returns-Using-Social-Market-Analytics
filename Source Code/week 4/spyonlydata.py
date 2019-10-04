@@ -15,12 +15,8 @@ import os
 import pandas as pd
 import time
 import numpy as np 
-import pywt
-from datetime import timedelta
-import matplotlib.pyplot as plt
-import seaborn as sns
-sns.set()
-
+import pywt #PyWavelets
+from datetime import timedelta  
 
 #from yahoo_historical import Fetcher
 '''
@@ -57,6 +53,8 @@ def readfilepath(REPORT_PATH,limit=[]):
                 fullpathlist[i].append(fullpath)
 
     return fullpathlist,filelist
+
+
 
 
 '''
@@ -370,18 +368,22 @@ def SPY():
     spyprice.index=spyprice['Date']
     next_Return=(spyprice['Adj_Close'][:-1].values-spyprice['Adj_Close'][1:])/spyprice['Adj_Close'][1:]
     today_Return=(spyprice['Adj_Close'][:-1]-spyprice['Adj_Close'][1:].values)/spyprice['Adj_Close'][1:].values
+    type(today_Return)
     
-    
+    sd_Return=today_Return.iloc[::-1].rolling(250).std().iloc[::-1]
+    sd_Return=sd_Return.dropna()
+    sd_Return=sd_Return[1:]
     #print(spydata)
     #print(D2spydata)
     #print(etfsmean)
-    s1=(next_Return).std()*0.1
-    s2=(next_Return).std()*2.0
-    s0=(next_Return).std()*-0.1
-    sn1=(next_Return).std()*-2.0
-    classret=[ 2  if ret>s2 else 1 if ret>s1 else 0 if ret>s0 else -1 if ret>sn1 else -2 for ret in next_Return]
+    #s1=(next_Return).std()*0.1
+    #s2=(next_Return).std()*2.0
+    #s0=(next_Return).std()*-0.1
+    #sn1=(next_Return).std()*-2.0
+    classret=[ 2  if next_Return[date]>sd_Return[date]*2.0 else 1 if next_Return[date]>sd_Return[date]*0.5 else 0 if next_Return[date]>sd_Return[date]*-0.5 else -1 if next_Return[date]>sd_Return[date]*-2.0 else -2 for date in sd_Return.index]
+    #classret=[ 2  if ret>s2 else 1 if ret>s1 else 0 if ret>s0 else -1 if ret>sn1 else -2 for ret in next_Return]
     classret=pd.DataFrame(classret)
-    classret.index=next_Return.index
+    classret.index=sd_Return.index
     classret.columns=['classret']
     next_Return=pd.DataFrame(next_Return)
     today_Return=pd.DataFrame(today_Return)
@@ -408,63 +410,132 @@ def mix():
     result = pd.concat([result, next_Return,today_Return,classret], axis=1, sort=False,join='inner')
     return result
 
+def newmix():
+    today_Return,next_Return,classret=SPY()
+    result=pd.DataFrame()
+    etfsmean=newdatatrans(['SPY'],df)
+    for ticker in etfsmean:
+        if len(result)==0:
+            oneticker=etfsmean[ticker]
+    
+            col_names=('raw_s','s_volume','s_dispersion','active_mins','raw_s_deg','raw_s_waves','raw_s_coff','s_volume_deg','s_volume_waves','s_volume_coff','s_dispersion_deg','s_dispersion_waves','s_dispersion_coff','s_delta')
+            oneticker = oneticker.drop(columns='date')
+            oneticker.columns=[names+ticker for names in col_names]
+            result=oneticker
+            continue
+        oneticker=etfsmean[ticker]
+        col_names=('raw_s','s_volume','s_dispersion','active_mins','raw_s_deg','raw_s_waves','raw_s_coff','s_volume_deg','s_volume_waves','s_volume_coff','s_dispersion_deg','s_dispersion_waves','s_dispersion_coff','s_delta')
+        oneticker = oneticker.drop(columns='date')
+        oneticker.columns=[names+ticker for names in col_names]
+        result = pd.concat([result,oneticker], axis=1, sort=False,join='inner')
+    result = pd.concat([result, next_Return,today_Return,classret], axis=1, sort=False,join='inner')
+    return result
 
-def write_svolume_dailyclose_to_csv():
-    SPY_s_Volume = pd.DataFrame(SPYdailydata['s_volumeSPY'])
+def newdatatrans(tickerlist,df):
+    #for ticker in tickerlist: 
+    #    df=meanclosetable(ticker,df)
+    #newdf=submeanclosetableonly(tickerlist,df)
+    allticker={}
+    
+    for ticker in tickerlist: 
+        singleticker=df[ticker]
+        if singleticker.get('nan'):
+            del singleticker['nan']
+        singleticker=pd.DataFrame.from_dict(df[ticker])
+        singleticker=singleticker.transpose()
+        col_names=('raw_s','s_volume','s_dispersion','active_mins','raw_s_deg','raw_s_waves','raw_s_coff','s_volume_deg','s_volume_waves','s_volume_coff','s_dispersion_deg','s_dispersion_waves','s_dispersion_coff','date')
 
-    # write all days and work in excel
-    all=pd.DataFrame.from_dict(df)
-    all.head()
-    all.to_csv('all.csv')
-    # write weekdays (no weekends) and work in excel
-    bdays = SPYdailydata
-    bdays.head()
-    bdays.to_csv('bdays.csv')
+        
+        singleticker.columns=col_names
+        for names in col_names:
+            if names!= 'date':
+                singleticker[names] = singleticker[names].astype(float)
+        singleticker['s_delta']=(singleticker['raw_s'][1:]-singleticker['raw_s'][:-1].values)
 
-    # store attributes of s-Volume in dataframes for future research and analysis:
-    SPY_sv_Mean = pd.DataFrame(SPYdailydata['sv_meanSPY'])
-    SPY_sv_Volatility = pd.DataFrame(SPYdailydata['sv_volatilitySPY'])
-    SPY_sv_Score = pd.DataFrame(SPYdailydata['sv_scoreSPY'])
-    return
+        allticker[ticker]=singleticker
+    return allticker
+      
 
-def analyze_svolume_dailyclose_data():
-    # make a new dataframe to work in from df
-    tmp = pd.DataFrame.from_dict(df.get('SPY').values())
+'''
+function
+=============
+create a txt './SPYdailydata.txt' that save avg per day
+=============
+input
+=============
+#fullpathlist: 2Dlist of full path
+=============
+output
+=============
+#dfout:        list show count of each ticker
+=============
+'''
+def SPYmin(fullpathlist):
+    f1 = open('./SPYmin.txt', 'w')
+    f1.write('')
+    f1.close()
+    totalfilecount=0
+    for i in range(len(fullpathlist)):
+        totalfilecount+=len(fullpathlist[i])
+    count=0
+    oldtime = time.time()
+    dfout = {'init':-1}
+    timekey=''
+    tickerkey=''
+    for i in range(len(fullpathlist)):
+        for j in range(len(fullpathlist[i])):
+            count+=1
+            print('percent: %.3f' % (
+                    count/totalfilecount*100
+                ))
+            tempdata=pd.read_csv(fullpathlist[i][j], sep="\t",skiprows=5)
+            if len(tempdata['ticker'])>0 :
+                tempdata=tempdata.set_index(pd.to_datetime(tempdata['date']))
+                tickerkey=tempdata['ticker'][0]
+                if dfout.get(tickerkey):
+                    tempticker=tickerkey
+                    dfout[tickerkey]+=1
+                else:
+                    tempticker=tickerkey
+                    dfout[tickerkey]=1
 
-    # now we are going to add the column names
-    tmpwip = tmp
-    col_names=['raw_s','raw_s_mean','raw_volatility','raw_score','s','s_mean','s_volatility',
-               's_score','s_volume','sv_mean','sv_volatility','sv_score','s_dispersion','s_buzz','s_delta']
-    col_names.append('date')
-    print(col_names)
-
-    # this also changes the column names in tmp:
-    tmpwip.columns = col_names
-
-#     now we need to change the index to dates instead of numbers:
-    tmp = tmp.set_index('date')
-    tmp.head()
-
-#     next, we need to convert the dataframe's dtype from non-null objects to numeric values
-#     otherwise we can't do anything with the data:
-    tmp.info()
-    myNewDataFrame = tmp.apply(pd.to_numeric)
-
-    # now this should say non-null float64, we can work on the dataframe now!
-    myNewDataFrame.info()
-
-#    plot s_volume data
-    myNewDataFrame[['s_volume']].plot(figsize=(20,10),linewidth=1,fontsize=16)
-    plt.show()
-
-    # let's just make a series for s_volume and nothing else
-    myNewSvolume = myNewDataFrame[['s_volume']]
-
-#    Let's do First-Order Differencing to investigate Seasonal Trends in the data
-#    Link: https://www.datacamp.com/community/tutorials/time-series-analysis-tutorial
-    myNewSvolume.diff().plot()
-
-
+                datelist=(np.unique(np.array([pd.to_datetime(date).date() for date in tempdata.date]))) 
+                for k in ((datelist)):
+                    tempout=[]
+                    tempout.append(tempdata['raw-s'][str(k)+' 9:29:59':str(k)+' 16:00:01'].sum())
+                    tempout.append(tempdata['s-volume'][str(k)+' 9:29:59':str(k)+' 16:00:01'].sum())
+                    tempout.append(tempdata['s-dispersion'][str(k)+' 9:29:59':str(k)+' 16:00:01'].sum())
+                    tempout.append(len(tempdata['raw-s'][str(k)+' 9:29:59':str(k)+' 16:00:01']))
+                    if tempout[3]>0:
+                        tempout.append(len(pywt.wavedec((tempdata['raw-s'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0]))
+                        tempout.append(len(pywt.wavedec((tempdata['raw-s'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')))
+                        tempout.append((pywt.wavedec((tempdata['raw-s'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0][0]))
+                        tempout.append(len(pywt.wavedec((tempdata['s-volume'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0]))
+                        tempout.append(len(pywt.wavedec((tempdata['s-volume'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')))
+                        tempout.append((pywt.wavedec((tempdata['s-volume'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0][0]))
+                        tempout.append(len(pywt.wavedec((tempdata['s-dispersion'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0]))
+                        tempout.append(len(pywt.wavedec((tempdata['s-dispersion'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')))
+                        tempout.append((pywt.wavedec((tempdata['s-dispersion'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0][0]))
+                    else:
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                    tempout.append(str(k))
+                    adddata('./SPYmin.txt',tempticker,tempout)
+                    tempticker=''
+        
+    newtime = time.time()
+    print('mean table use: %.3fs' % (
+            newtime - oldtime
+        ))
+    return dfout
+ 
 
 tickerlist=['SPY']
 fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
@@ -480,3 +551,11 @@ SPYdailydata=mix()
 SPYdailydata['s_deltaSPY']=(SPYdailydata['raw_sSPY'][1:]-SPYdailydata['raw_sSPY'][:-1].values)
 
 
+#################################################################################################
+tickerlist=['SPY1min']
+fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
+
+#dfout=SPYmin(fullpathlist)
+df=readdata('./SPYmin.txt')
+
+SPYmintable=newmix()
