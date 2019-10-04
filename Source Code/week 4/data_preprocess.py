@@ -27,37 +27,37 @@ import math
 from spyonlydata import *
 
 plt.rcParams['figure.dpi'] = 120
-col_names=('raw_s','raw_s_mean','raw_volatility','raw_score','s','s_mean','s_volatility','s_score','s_volume','sv_mean','sv_volatility','sv_score','s_dispersion','s_buzz','s_delta','next_Return','today_Return','classret')
-
 
 ###check for the significance
 def significance_check(singleticker):
     
     singleticker.columns=col_names
-    est_return = smf.ols(formula='next_Return~raw_s+raw_s_mean+raw_volatility+raw_score+s+\
-                  s_mean+s_volatility+s_score+s_volume+sv_mean+sv_volatility+sv_score+s_dispersion+\
-                  +s_buzz+s_delta', data=singleticker).fit()
-    
-    est_return_2 = smf.ols(formula='next_Return~sv_mean', data=singleticker).fit()
-    print(est_return.summary()) 
+#    est_return = smf.ols(formula='next_Return~raw_s+raw_s_mean+raw_volatility+raw_score+s+\
+#                  s_mean+s_volatility+s_score+s_volume+sv_mean+sv_volatility+sv_score+s_dispersion+\
+#                  +s_buzz+s_delta', data=singleticker).fit()
+#    
+    est_return_2 = smf.ols(formula='next_Return~raw_s+s_volume+s_delta', data=singleticker).fit()
+#    print(est_return.summary()) 
     print(est_return_2.summary()) 
 
 
 def random_forest_classification(singleticker):
+    
+    singleticker.columns=col_names
+    singleticker=singleticker[['raw_s','s_volume','s_delta','classret']]
+    singleticker['s_delta'][0]=0
     
     from sklearn.ensemble import RandomForestClassifier 
     from sklearn.datasets import make_regression
     from sklearn.model_selection import GridSearchCV 
     from sklearn.metrics import classification_report
     
-    warnings.filterwarnings("ignore")
-    
     forest = RandomForestClassifier(random_state=42)
     para = {'max_depth':range(1,15), 'min_samples_leaf':range(1,15)}
     
     CV_forest= GridSearchCV(forest,para,cv=6, n_jobs= 4,iid = True,refit= True)
     singleticker_new=singleticker
-    singleticker_new=singleticker_new.drop(columns=['today_Return','next_Return','classret'])
+    singleticker_new=singleticker_new.drop(columns=['classret'])
             
     CV_forest.fit(singleticker_new,singleticker['classret'] )
     best_leaf = CV_forest.best_params_['min_samples_leaf']
@@ -101,9 +101,10 @@ def plotting(singleticker):
         ax2.tick_params(axis='y', labelcolor=color)
         
         fig.tight_layout() 
-        plt.xticks(np.arange(0,len(singleticker[col]),20.0))
+        plt.xticks(np.arange(0,len(singleticker[col]),150.0))
         
         plt.show()
+        
 
 def distribution(singleticker):
     
@@ -127,8 +128,10 @@ def stationarity(singleticker):
         st=adf_test(result[col])['p-value']
         plist.append(st)
         
+        print('The ACF and PACF graph of '+str(col)+'is below: ')
         adf_test(result[col])
         acf_pacf_plot(result[col])
+        plt.show()
         
     return plist
 
@@ -148,76 +151,86 @@ def acf_pacf_plot(ts_log_diff):
 def outlier(singleticker):
     
     singleticker.columns=col_names   
-    result=singleticker[['raw_s','s_volume','s_delta']]
+    result=singleticker[['raw_s','s_volume','s_delta']]    
+    result['s_delta'][0]=0
     
-    fig, axs = plt.subplots(4, 4)
+    fig, axs = plt.subplots(1, 3)
     count=0
-    for col in result:
-    
-        axs[math.floor(count/4), count%4].boxplot(result[col])
-        axs[math.floor(count/4), count%4].set_title(col)
+    for col in result:   
+        axs[count%3].boxplot(result[col])
+        axs[count%3].set_title(col)
         count+=1
+        
     fig.subplots_adjust(left=0.08, right=0.98, bottom=0.05, top=1.5,
                         hspace=0.4, wspace=0.3)
     fig.dpi=100
 
+
+def check_seasonlity(data):
+    volume=data['s_volume']
+    plt.plot(volume[:60])
+    plt.xticks(np.arange(0,60,15))
+    plt.show()
+    
+    from datetime import datetime
+    weekday=[]
+    date=data.index
+    for i in date:
+        weekday.append(datetime.strptime(i, '%Y-%m-%d').weekday()+1)
+    season={"weekday" : weekday,
+       "volume" : volume}
+    
+    season=pd.DataFrame(season)
+    
+    Season_index=[]
+    for i in range(5):
+        Season_index.append(np.mean(season[season['weekday']==(i+1)]['volume'])/np.mean(season['volume']))
+    
+    print('season_index:')
+    print(Season_index)
+       
+#    for i in range(5):
+#        if i==0:
+#            season_ad2=season[season['weekday']==(i+1)]['volume']/Season_index[i]
+#        else:
+#            season_ad=season[season['weekday']==(i+1)]['volume']/Season_index[i]
+#            season_ad2=season_ad2.combine(season_ad,max,fill_value=0)  
+#    season['Vol_adjust']=season_ad2
+#    
+#    stationariy_adjust=adf_test(season['Vol_adjust'])
+#    print(stationariy_adjust)
+    
 #--------------------------------------------------------------------------------------#
-print('start outlier')
+
 
 oldtime = time.time()
-stlist=[]
+
+
+col_names=('raw_s','raw_s_mean','raw_volatility','raw_score','s','s_mean','s_volatility','s_score','s_volume','sv_mean','sv_volatility','sv_score','s_dispersion','s_buzz','s_delta','next_Return','today_Return','classret')
 outlier(SPYdailydata)
-newtime = time.time()
-print('outlier use: %.3fs' % (
-       newtime - oldtime
-   ))
-#--------------------------------------------------------------------------------------#
-
-print('start stationarity')
-
-oldtime = time.time()
 stationarity(SPYdailydata)
-newtime = time.time()
-print('stationarity use: %.3fs' % (
-        newtime - oldtime
-    ))
-
-#--------------------------------------------------------------------------------------#
-print('start distribution')
-oldtime = time.time()
-
 distribution(SPYdailydata)
+plotting(SPYdailydata)
+check_seasonlity(SPYdailydata)
+significance_check(SPYdailydata)
+
+warnings.filterwarnings("ignore")
+random_forest_classification(SPYdailydata)
+   
+
+col_names=('raw_s', 's_volume', 's_dispersion', 'active_mins','raw_s_deg', 'raw_s_waves', 'raw_s_coff', 's_volume_deg','s_volume_waves', 's_volume_coff', 's_dispersion_deg','s_dispersion_waves','s_dispersion_coff', 's_delta','next_Return', 'today_Return', 'classret')
+outlier(SPYmintable)
+stationarity(SPYmintable)
+distribution(SPYmintable)
+plotting(SPYmintable)
+check_seasonlity(SPYmintable)
+significance_check(SPYmintable)
+
+warnings.filterwarnings("ignore")
+random_forest_classification(SPYmintable)
 
 newtime = time.time()
-print('distribution use: %.3fs' % (
+print('time used: %.3fs' % (
        newtime - oldtime
    ))
 #--------------------------------------------------------------------------------------#
-
-volume=SPYdailydata['s_volume']
-plt.plot(volume)
-
-from datetime import datetime
-weekday=[]
-date=SPYdailydata.index
-for i in date:
-    weekday.append(datetime.strptime(i, '%Y-%m-%d').weekday()+1)
-season={"weekday" : weekday,
-   "volume" : volume}
-
-season=pd.DataFrame(season)
-
-Season_index=[]
-for i in range(5):
-    Season_index.append(np.mean(season[season['weekday']==(i+1)]['volume'])/np.mean(season['volume']))
-
-for i in range(5):
-    if i==0:
-        season_ad2=season[season['weekday']==(i+1)]['volume']/Season_index[i]
-    else:
-        season_ad=season[season['weekday']==(i+1)]['volume']/Season_index[i]
-        season_ad2=season_ad2.combine(season_ad,max,fill_value=0)  
-season['Vol_adjust']=season_ad2
-
-stationariy_check=adf_test(season['Vol_adjust'])
-print(stationariy_check)
