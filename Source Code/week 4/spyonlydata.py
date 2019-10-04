@@ -15,7 +15,7 @@ import os
 import pandas as pd
 import time
 import numpy as np 
-import pywt #导入PyWavelets
+import pywt #PyWavelets
 from datetime import timedelta  
 
 #from yahoo_historical import Fetcher
