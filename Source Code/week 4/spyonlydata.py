@@ -55,6 +55,8 @@ def readfilepath(REPORT_PATH,limit=[]):
     return fullpathlist,filelist
 
 
+
+
 '''
 function
 =============
@@ -366,18 +368,22 @@ def SPY():
     spyprice.index=spyprice['Date']
     next_Return=(spyprice['Adj_Close'][:-1].values-spyprice['Adj_Close'][1:])/spyprice['Adj_Close'][1:]
     today_Return=(spyprice['Adj_Close'][:-1]-spyprice['Adj_Close'][1:].values)/spyprice['Adj_Close'][1:].values
+    type(today_Return)
     
-    
+    sd_Return=today_Return.iloc[::-1].rolling(250).std().iloc[::-1]
+    sd_Return=sd_Return.dropna()
+    sd_Return=sd_Return[1:]
     #print(spydata)
     #print(D2spydata)
     #print(etfsmean)
-    s1=(next_Return).std()*0.1
-    s2=(next_Return).std()*2.0
-    s0=(next_Return).std()*-0.1
-    sn1=(next_Return).std()*-2.0
-    classret=[ 2  if ret>s2 else 1 if ret>s1 else 0 if ret>s0 else -1 if ret>sn1 else -2 for ret in next_Return]
+    #s1=(next_Return).std()*0.1
+    #s2=(next_Return).std()*2.0
+    #s0=(next_Return).std()*-0.1
+    #sn1=(next_Return).std()*-2.0
+    classret=[ 2  if next_Return[date]>sd_Return[date]*2.0 else 1 if next_Return[date]>sd_Return[date]*0.5 else 0 if next_Return[date]>sd_Return[date]*-0.5 else -1 if next_Return[date]>sd_Return[date]*-2.0 else -2 for date in sd_Return.index]
+    #classret=[ 2  if ret>s2 else 1 if ret>s1 else 0 if ret>s0 else -1 if ret>sn1 else -2 for ret in next_Return]
     classret=pd.DataFrame(classret)
-    classret.index=next_Return.index
+    classret.index=sd_Return.index
     classret.columns=['classret']
     next_Return=pd.DataFrame(next_Return)
     today_Return=pd.DataFrame(today_Return)
@@ -404,6 +410,132 @@ def mix():
     result = pd.concat([result, next_Return,today_Return,classret], axis=1, sort=False,join='inner')
     return result
 
+def newmix():
+    today_Return,next_Return,classret=SPY()
+    result=pd.DataFrame()
+    etfsmean=newdatatrans(['SPY'],df)
+    for ticker in etfsmean:
+        if len(result)==0:
+            oneticker=etfsmean[ticker]
+    
+            col_names=('raw_s','s_volume','s_dispersion','active_mins','raw_s_deg','raw_s_waves','raw_s_coff','s_volume_deg','s_volume_waves','s_volume_coff','s_dispersion_deg','s_dispersion_waves','s_dispersion_coff','s_delta')
+            oneticker = oneticker.drop(columns='date')
+            oneticker.columns=[names+ticker for names in col_names]
+            result=oneticker
+            continue
+        oneticker=etfsmean[ticker]
+        col_names=('raw_s','s_volume','s_dispersion','active_mins','raw_s_deg','raw_s_waves','raw_s_coff','s_volume_deg','s_volume_waves','s_volume_coff','s_dispersion_deg','s_dispersion_waves','s_dispersion_coff','s_delta')
+        oneticker = oneticker.drop(columns='date')
+        oneticker.columns=[names+ticker for names in col_names]
+        result = pd.concat([result,oneticker], axis=1, sort=False,join='inner')
+    result = pd.concat([result, next_Return,today_Return,classret], axis=1, sort=False,join='inner')
+    return result
+
+def newdatatrans(tickerlist,df):
+    #for ticker in tickerlist: 
+    #    df=meanclosetable(ticker,df)
+    #newdf=submeanclosetableonly(tickerlist,df)
+    allticker={}
+    
+    for ticker in tickerlist: 
+        singleticker=df[ticker]
+        if singleticker.get('nan'):
+            del singleticker['nan']
+        singleticker=pd.DataFrame.from_dict(df[ticker])
+        singleticker=singleticker.transpose()
+        col_names=('raw_s','s_volume','s_dispersion','active_mins','raw_s_deg','raw_s_waves','raw_s_coff','s_volume_deg','s_volume_waves','s_volume_coff','s_dispersion_deg','s_dispersion_waves','s_dispersion_coff','date')
+
+        
+        singleticker.columns=col_names
+        for names in col_names:
+            if names!= 'date':
+                singleticker[names] = singleticker[names].astype(float)
+        singleticker['s_delta']=(singleticker['raw_s'][1:]-singleticker['raw_s'][:-1].values)
+
+        allticker[ticker]=singleticker
+    return allticker
+      
+
+'''
+function
+=============
+create a txt './SPYdailydata.txt' that save avg per day
+=============
+input
+=============
+#fullpathlist: 2Dlist of full path
+=============
+output
+=============
+#dfout:        list show count of each ticker
+=============
+'''
+def SPYmin(fullpathlist):
+    f1 = open('./SPYmin.txt', 'w')
+    f1.write('')
+    f1.close()
+    totalfilecount=0
+    for i in range(len(fullpathlist)):
+        totalfilecount+=len(fullpathlist[i])
+    count=0
+    oldtime = time.time()
+    dfout = {'init':-1}
+    timekey=''
+    tickerkey=''
+    for i in range(len(fullpathlist)):
+        for j in range(len(fullpathlist[i])):
+            count+=1
+            print('percent: %.3f' % (
+                    count/totalfilecount*100
+                ))
+            tempdata=pd.read_csv(fullpathlist[i][j], sep="\t",skiprows=5)
+            if len(tempdata['ticker'])>0 :
+                tempdata=tempdata.set_index(pd.to_datetime(tempdata['date']))
+                tickerkey=tempdata['ticker'][0]
+                if dfout.get(tickerkey):
+                    tempticker=tickerkey
+                    dfout[tickerkey]+=1
+                else:
+                    tempticker=tickerkey
+                    dfout[tickerkey]=1
+
+                datelist=(np.unique(np.array([pd.to_datetime(date).date() for date in tempdata.date]))) 
+                for k in ((datelist)):
+                    tempout=[]
+                    tempout.append(tempdata['raw-s'][str(k)+' 9:29:59':str(k)+' 16:00:01'].sum())
+                    tempout.append(tempdata['s-volume'][str(k)+' 9:29:59':str(k)+' 16:00:01'].sum())
+                    tempout.append(tempdata['s-dispersion'][str(k)+' 9:29:59':str(k)+' 16:00:01'].sum())
+                    tempout.append(len(tempdata['raw-s'][str(k)+' 9:29:59':str(k)+' 16:00:01']))
+                    if tempout[3]>0:
+                        tempout.append(len(pywt.wavedec((tempdata['raw-s'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0]))
+                        tempout.append(len(pywt.wavedec((tempdata['raw-s'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')))
+                        tempout.append((pywt.wavedec((tempdata['raw-s'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0][0]))
+                        tempout.append(len(pywt.wavedec((tempdata['s-volume'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0]))
+                        tempout.append(len(pywt.wavedec((tempdata['s-volume'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')))
+                        tempout.append((pywt.wavedec((tempdata['s-volume'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0][0]))
+                        tempout.append(len(pywt.wavedec((tempdata['s-dispersion'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0]))
+                        tempout.append(len(pywt.wavedec((tempdata['s-dispersion'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')))
+                        tempout.append((pywt.wavedec((tempdata['s-dispersion'][str(k)+' 9:29:59':str(k)+' 16:00:01']), 'db1')[0][0]))
+                    else:
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                        tempout.append(0)
+                    tempout.append(str(k))
+                    adddata('./SPYmin.txt',tempticker,tempout)
+                    tempticker=''
+        
+    newtime = time.time()
+    print('mean table use: %.3fs' % (
+            newtime - oldtime
+        ))
+    return dfout
+ 
 
 tickerlist=['SPY']
 fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
@@ -419,3 +551,11 @@ SPYdailydata=mix()
 SPYdailydata['s_deltaSPY']=(SPYdailydata['raw_sSPY'][1:]-SPYdailydata['raw_sSPY'][:-1].values)
 
 
+#################################################################################################
+tickerlist=['SPY1min']
+fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
+
+#dfout=SPYmin(fullpathlist)
+df=readdata('./SPYmin.txt')
+
+SPYmintable=newmix()
