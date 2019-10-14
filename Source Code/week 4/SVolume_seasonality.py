@@ -14,7 +14,7 @@ from patsy.highlevel import dmatrices, dmatrix
 col_names = ['ticker', 'date', 'description', 'raw-s', 's-volume',
              's-dispersion',	'raw-s-delta','volume-delta', 'center-date',
              'center-time', 'center-time-zone']
-pd.read
+# pd.read
 
 SPY_2015_1min = pd.read_csv('C://Users//jloss//PyCharmProjects//SMA-HullTrading-Practicum//'
                             'Source Code//week 4//joey//Activity Feed Data//sma_history_tw_1m_activity_etf_201507_201512//'
