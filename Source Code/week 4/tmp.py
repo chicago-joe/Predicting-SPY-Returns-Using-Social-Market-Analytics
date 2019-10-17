@@ -1,68 +1,16 @@
-# ES_F_main.py
-#
-# analysis of S&P500 E-mini Futures data (ticker: ES_F)
-# 15-min data
-#
-# created by Joseph Loss on 10/14/2019
-# contact: loss2@illinois.edu
-#
-# import pandas as pd
-# import time
-# import numpy as np
-# # import pywt
-# from datetime import timedelta
-# import matplotlib.pyplot as plt
-#
-#
-# # locate the raw txt files
-# raw_ES_F_2015 = 'C://Users//jloss//PyCharmProjects//SMA-HullTrading-Practicum//Source Code//data//F1m2015//ES_F.txt'
-# raw_ES_F_2016 = 'C://Users//jloss//PyCharmProjects//SMA-HullTrading-Practicum//Source Code//data//F1m2016//ES_F.txt'
-# raw_ES_F_2017 = 'C://Users//jloss//PyCharmProjects//SMA-HullTrading-Practicum//Source Code//data//F1m2017//ES_F.txt'
-#
-# column_names = ['ticker', 'date', 'raw-s', 'raw-s-mean', 'raw-volatility', 'raw-score', 's',
-#                 's-mean', 's-volatility', 's-score', 's-volume', 'sv-mean', 'sv-volatility',
-#                 'sv-score', 's-dispersion', 's-buzz', 's-delta', 'center-date', 'center-time', 'center-time-zone']
-#
-# # read data in
-# ES_F_2015 = pd.read_csv(raw_ES_F_2015, skiprows = 6, sep = '\t', names = column_names)
-# ES_F_2016 = pd.read_csv(raw_ES_F_2016, skiprows = 6, sep = '\t', names = column_names)
-# ES_F_2017 = pd.read_csv(raw_ES_F_2017, skiprows = 6, sep = '\t', names = column_names)
-#
-# #aggregating data
-# df_tmp = ES_F_2015.append(ES_F_2016, ignore_index = True)
-# df_aggregate = df_tmp.append(ES_F_2017, ignore_index = True)
-# df_datetime = df_aggregate['date'].str.split(' ', n = 1, expand = True )
-# df_datetime.columns = ['Date', 'Time']
-# df = pd.merge(df_aggregate, df_datetime, left_index = True, right_index = True)
-#
-# #filtering based on trading hours and excluding weekends
-# df = df[(df['Time'] >= '09:24:00') & (df['Time'] <= '16:11:00')]
-#
-# #excluding weekends
-# #removing empty columns
-# df = df.dropna(axis='columns')
-# df=df.drop(columns=['ticker','date','center-date','center-time','center-time-zone'])
-# df["volume_base_s"]=df["raw-s"]/df["s-volume"]
-#
-#
-#
-# # # manipulate time into date and time columns
-# # df_tmp = df['date'].str.split(' ',n=1,expand=True)
-# # df = pd.merge(df,df_tmp,left_index=True,right_index=True)
-# #
-# # # move date and time columns to front
-# # cols = df.columns.tolist()
-# # cols
-#
-# # df.rename(columns={'0': 'date', '1': 'time'},inplace = True)
-# # cols = cols[-2:] + cols[:-2]
-# # # cols
-# # df = df[cols]
-# #
-# # # rename new columnns
-# # df = df.drop(columns=['date'])
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Sep 28 17:36:04 2019
 
+@author: duany
+"""
 
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Sep  9 21:35:50 2019
+
+@author: duany
+"""
 import pandas as pd
 import time
 import numpy as np
@@ -108,34 +56,33 @@ from statsmodels.tsa.stattools import adfuller
     #     dfoutput['Critical Value (%s)'%key] = value
     # return(dfoutput)
 
-# def SPY():
-#     spyprice=pd.read_csv('SPY Price Data.csv')
-#     spyprice.index=spyprice['Date']
-#     next_Return=(spyprice['Adj_Close'][:-1].values-spyprice['Adj_Close'][1:])/spyprice['Adj_Close'][1:]
-#     today_Return=(spyprice['Adj_Close'][:-1]-spyprice['Adj_Close'][1:].values)/spyprice['Adj_Close'][1:].values
-#     type(today_Return)
-#
-#     sd_Return=today_Return.iloc[::-1].rolling(250).std().iloc[::-1]
-#     sd_Return=sd_Return.dropna()
-#     sd_Return=sd_Return[1:]
-#     #print(spydata)
-#     #print(D2spydata)
-#     #print(etfsmean)
-#     #s1=(next_Return).std()*0.1
-#     #s2=(next_Return).std()*2.0
-#     #s0=(next_Return).std()*-0.1
-#     #sn1=(next_Return).std()*-2.0
-#     classret=[ 2  if next_Return[date]>sd_Return[date]*2.0 else 1 if next_Return[date]>sd_Return[date]*0.5 else 0 if next_Return[date]>sd_Return[date]*-0.5 else -1 if next_Return[date]>sd_Return[date]*-2.0 else -2 for date in sd_Return.index]
-#     #classret=[ 2  if ret>s2 else 1 if ret>s1 else 0 if ret>s0 else -1 if ret>sn1 else -2 for ret in next_Return]
-#     classret=pd.DataFrame(classret)
-#     classret.index=sd_Return.index
-#     classret.columns=['classret']
-#     next_Return=pd.DataFrame(next_Return)
-#     today_Return=pd.DataFrame(today_Return)
-#     next_Return.columns=['next_Return']
-#     today_Return.columns=['today_Return']
-#     return today_Return,next_Return,classret
+def SPY():
+    spyprice=pd.read_csv('SPY Price Data.csv')
+    spyprice.index=spyprice['Date']
+    next_Return=(spyprice['Adj_Close'][:-1].values-spyprice['Adj_Close'][1:])/spyprice['Adj_Close'][1:]
+    today_Return=(spyprice['Adj_Close'][:-1]-spyprice['Adj_Close'][1:].values)/spyprice['Adj_Close'][1:].values
+    type(today_Return)
 
+    sd_Return=today_Return.iloc[::-1].rolling(250).std().iloc[::-1]
+    sd_Return=sd_Return.dropna()
+    sd_Return=sd_Return[1:]
+    #print(spydata)
+    #print(D2spydata)
+    #print(etfsmean)
+    #s1=(next_Return).std()*0.1
+    #s2=(next_Return).std()*2.0
+    #s0=(next_Return).std()*-0.1
+    #sn1=(next_Return).std()*-2.0
+    classret=[ 2  if next_Return[date]>sd_Return[date]*2.0 else 1 if next_Return[date]>sd_Return[date]*0.5 else 0 if next_Return[date]>sd_Return[date]*-0.5 else -1 if next_Return[date]>sd_Return[date]*-2.0 else -2 for date in sd_Return.index]
+    #classret=[ 2  if ret>s2 else 1 if ret>s1 else 0 if ret>s0 else -1 if ret>sn1 else -2 for ret in next_Return]
+    classret=pd.DataFrame(classret)
+    classret.index=sd_Return.index
+    classret.columns=['classret']
+    next_Return=pd.DataFrame(next_Return)
+    today_Return=pd.DataFrame(today_Return)
+    next_Return.columns=['next_Return']
+    today_Return.columns=['today_Return']
+    return today_Return,next_Return,classret
 
 raw_ES_F_2015 = 'C://Users//jloss//PyCharmProjects//SMA-HullTrading-Practicum//Source Code//data//F1m2015//ES_F.txt'
 raw_ES_F_2016 = 'C://Users//jloss//PyCharmProjects//SMA-HullTrading-Practicum//Source Code//data//F1m2016//ES_F.txt'
@@ -203,7 +150,7 @@ def alldata():
     dffinal["s_dispersion_wave"] = df.groupby("Date")["s-dispersion"].apply(lambda x: len(pywt.wavedec(x,'db1')))
 
 
-    # today_Return,next_Return,classret=SPY()
+    today_Return,next_Return,classret=SPY()
     sd_Return=today_Return.iloc[::-1].rolling(250).std().iloc[::-1]
     sd_Return=sd_Return.dropna()
     sd_Return=sd_Return[1:]
