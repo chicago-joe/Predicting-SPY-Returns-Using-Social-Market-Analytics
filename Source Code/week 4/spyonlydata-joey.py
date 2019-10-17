@@ -30,7 +30,7 @@ find the path of all file in the folder
 =============
 input
 =============
-#REPORT_PATH: datafile forder list ex:['./2015/','./2016/','./2017/']
+#REPORT_PATH: datafile forder list ex:['./F1m2015/','./F1m2016/','./F1m2017/']
 #limit:       list of target ticker 
 =============
 output
@@ -288,20 +288,20 @@ output
 #df:           the data after edit
 =============
 '''
-def meanclosetable(ticker,df):
-    oldtime = time.time()
-
-    price = Fetcher(ticker, [2015,9,1], [2017,12,31]).getHistorical()
-    price=price.set_index((price['Date']))
-    for timedata in df[ticker]:
-        if sum(price.index==timedata)==1:
-            df[ticker][timedata].append(price.loc[timedata][4])
-    newtime = time.time()
-    print('update data time: %.3f' % (
-        newtime - oldtime
-    ))
-    return df
-
+# def meanclosetable(ticker,df):
+#     oldtime = time.time()
+# 
+#     price = Fetcher(ticker, [2015,9,1], [2017,12,31]).getHistorical()
+#     price=price.set_index((price['Date']))
+#     for timedata in df[ticker]:
+#         if sum(price.index==timedata)==1:
+#             df[ticker][timedata].append(price.loc[timedata][4])
+#     newtime = time.time()
+#     print('update data time: %.3f' % (
+#         newtime - oldtime
+#     ))
+#     return df
+# 
 '''
 function
 =============
@@ -466,8 +466,8 @@ def analyze_svolume_dailyclose_data():
 
 
 
-tickerlist=['SPY']
-fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
+tickerlist=['ES_F']
+fullpathlist,filelist=readfilepath(['./F1m2015/','./F1m2016/','./F1m2017/'],tickerlist)
 
 #dfout=SPYticker(fullpathlist)
 df=readdata('./SPYdailydata.txt')
