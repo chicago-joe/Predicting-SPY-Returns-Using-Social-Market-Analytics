@@ -25,11 +25,12 @@ df_daily_SPY = df_daily_SPY.dropna()
 df_daily_SPY.set_index('Date',inplace=True)
 
 target = df_daily_SPY["next_Return"]
-df_daily_SPY.drop(["next_Return"],axis=1)
-df_daily_SPY.drop(["today_Return"],axis=1)
+df_daily_SPY = df_daily_SPY.drop(["next_Return"],axis=1)
+df_daily_SPY = df_daily_SPY.drop(["today_Return"],axis=1)
 
 # filter for unstationary
 features = df_daily_SPY.columns
 for name in features:
     if df_stat_SPY[name].bool() == False:
         df_daily_SPY=df_daily_SPY.drop([name],axis=1)
+        
