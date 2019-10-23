@@ -12,8 +12,9 @@ import time
 import numpy as np
 import sklearn
 
-SPYstat = "D:\Github Repo\SMA-HullTrading-Practicum\Source Code\Data\SPYstationarity.txt"
-SPYdaily = "D:\Github Repo\SMA-HullTrading-Practicum\Source Code\Data\SPYdaily.txt"
+address = 
+SPYstat = address+"\SPYstationarity.txt"
+SPYdaily = address+"\SPYdaily.txt"
 
 
 df_stat_SPY = pd.read_csv(SPYstat,delimiter = ",")
