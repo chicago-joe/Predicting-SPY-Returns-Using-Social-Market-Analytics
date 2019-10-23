@@ -8,9 +8,14 @@ Created on Sun Oct 20 21:54:04 2019
 
 import seaborn as sns
 import pandas as pd
-import time
 import numpy as np
-import sklearn
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn import linear_model
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import mean_squared_error,r2_score
+from sklearn.linear_model import Ridge, Lasso, ElasticNet, LinearRegression
 
 address = "C:/Users/yz_ze/Documents/GitHub/SMA-HullTrading-Practicum/Data/"
 SPYstat = address+"SPYstationarity.txt"
@@ -34,3 +39,24 @@ for name in features:
     if df_stat_SPY[name].bool() == False:
         df_daily_SPY=df_daily_SPY.drop([name],axis=1)
         
+X_train, X_test, y_train, y_test = train_test_split(df_daily_SPY, target, 
+                                                    test_size=0.2,
+                                                    random_state=42)
+
+alpha = np.arange(0,1000,0.5)
+
+ridge_df = pd.DataFrame()
+
+for i in range(len(alpha)):
+    ridge = Ridge(alpha=alpha[i])
+    ridge.fit(X_train, y_train)
+    y_train_pred = ridge.predict(X_train)
+    y_test_pred = ridge.predict(X_test)
+    
+    ridge_df[float(alpha[i])] = ridge.coef_
+
+ridge_df = ridge_df.transpose()
+
+ridge_df.plot()
+plt.ylim(-0.05,0.05)
+plt.legend(bbox_to_anchor=(1.05, 1), loc='best', borderaxespad=0.)
