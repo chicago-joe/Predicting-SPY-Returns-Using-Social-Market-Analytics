@@ -110,7 +110,7 @@ def distribution(singleticker):
     
     singleticker.columns=col_names
     
-    result=singleticker[['raw_s','s_volume','s_delta']]
+    result=singleticker[['raw_s','s_volume','s_delta','classret']]
     sns.pairplot(result)
     g = sns.PairGrid(result)
     g.map_diag(sns.kdeplot)
@@ -119,7 +119,8 @@ def distribution(singleticker):
 def stationarity(singleticker):
     
     singleticker.columns=col_names   
-    result=singleticker[['raw_s','s_volume','s_delta']]
+    #result=singleticker[['raw_s','s_volume','s_delta']]
+    result=singleticker
     result['s_delta'][0]=0
 
     
