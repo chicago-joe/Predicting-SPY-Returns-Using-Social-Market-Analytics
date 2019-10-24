@@ -17,7 +17,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error,r2_score
 from sklearn.linear_model import Ridge, Lasso, ElasticNet, LinearRegression
 
-address = "C:/Users/yz_ze/Documents/GitHub/SMA-HullTrading-Practicum/Data/"
+address = "C:/Users/jloss/PyCharmProjects/SMA-HullTrading-Practicum/Source Code/week 6/"
 SPYstat = address+"SPYstationarity.txt"
 SPYdaily = address+"SPYdaily.txt"
 
