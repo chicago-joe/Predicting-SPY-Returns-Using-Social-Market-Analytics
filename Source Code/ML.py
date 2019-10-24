@@ -74,6 +74,14 @@ plt.ylabel("Coefficient")
 plt.xlabel("Lambda Value")
 plt.figure(figsize=(20,20))
 
+plt.plot(list(ridge_score.keys()),list(ridge_score.values()))
+plt.grid()
+plt.xlim(0)
+plt.title("Ridge score")
+plt.xlabel("Lambda")
+plt.ylabel("R^2")
+plt.figure(figsize=(20,20))
+
 ridge_df.to_csv(address+"ridge_res.csv")
 
 # Trending for Lasso
@@ -101,5 +109,15 @@ plt.title("Lasso With 0 - 5e-5 Range")
 plt.ylabel("Coefficient")
 plt.xlabel("Lambda Value")
 plt.figure(figsize=(20,10))
+
+plt.plot(list(lasso_score.keys()),list(lasso_score.values()))
+plt.xticks(rotation=70)
+plt.grid()
+plt.xlim(0)
+plt.title("Ridge score")
+plt.xlabel("Lambda")
+plt.ylabel("R^2")
+plt.figure(figsize=(20,20))
+
 
 lasso_df.to_csv(address+"lasso_res.csv")
