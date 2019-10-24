@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn import linear_model
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import mean_squared_error,r2_score
+from sklearn.metrics import mean_squared_error,r2_score,accuracy_score
 from sklearn.linear_model import Ridge, Lasso, ElasticNet, LinearRegression
 
 address = "D:/Github Repo/SMA-HullTrading-Practicum/Data/"
@@ -30,8 +30,10 @@ df_daily_SPY = df_daily_SPY.dropna()
 df_daily_SPY.set_index('Date',inplace=True)
 
 target = df_daily_SPY["next_Return"]
+
 df_daily_SPY = df_daily_SPY.drop(["next_Return"],axis=1)
 df_daily_SPY = df_daily_SPY.drop(["today_Return"],axis=1)
+df_daily_SPY = df_daily_SPY.drop(["classret"],axis=1)
 
 # filter for unstationary
 features = df_daily_SPY.columns
@@ -49,6 +51,7 @@ features = df_daily_SPY.columns
 ## 0-0.01 study
 alpha = np.linspace(0,0.02,1000)
 ridge_df = pd.DataFrame()
+ridge_score = {}
 
 for i in range(len(alpha)):
     ridge = Ridge(alpha=alpha[i])
@@ -57,11 +60,13 @@ for i in range(len(alpha)):
     y_test_pred = ridge.predict(X_test)
     
     ridge_df[float(alpha[i])] = ridge.coef_
+    #print(ridge.score(X_train,y_train))
+    ridge_score[float(alpha[i])] = ridge.score(X_train,y_train)
 
 ridge_df = ridge_df.set_index(features)
 ridge_df = ridge_df.transpose()
 
-ax1 = ridge_df.plot(logx=True,grid=True)
+ridge_df.plot(logx=True,grid=True)
 
 plt.legend(bbox_to_anchor=(1.05, 1), loc='best', borderaxespad=0.)
 plt.title("Ridge With 0 - 0.02 Range")
@@ -69,27 +74,32 @@ plt.ylabel("Coefficient")
 plt.xlabel("Lambda Value")
 plt.figure(figsize=(20,20))
 
+ridge_df.to_csv(address+"ridge_res.csv")
 
 # Trending for Lasso
 ## 0-0.1 study
 alpha = np.linspace(0,0.00002,1000)
 lasso_df = pd.DataFrame()
+lasso_score = {}
 
 for i in range(len(alpha)):
     lasso = Lasso(alpha=alpha[i])
     lasso.fit(X_train, y_train)
     y_train_pred = lasso.predict(X_train)
     y_test_pred = lasso.predict(X_test)
+    lasso_score[float(alpha[i])] = lasso.score(X_train,y_train)
     
     lasso_df[float(alpha[i])] = lasso.coef_
 
 lasso_df = lasso_df.set_index(features)
 lasso_df = lasso_df.transpose()
 
-ax1=lasso_df.plot(logx=True,grid=True)
+lasso_df.plot(logx=True,grid=True)
 
 plt.legend(bbox_to_anchor=(1.05, 1), loc='best', borderaxespad=0.)
 plt.title("Lasso With 0 - 5e-5 Range")
 plt.ylabel("Coefficient")
-plt.xlabel("Alpha Value")
+plt.xlabel("Lambda Value")
 plt.figure(figsize=(20,10))
+
+lasso_df.to_csv(address+"lasso_res.csv")
