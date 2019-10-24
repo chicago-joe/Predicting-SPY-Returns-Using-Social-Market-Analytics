@@ -17,7 +17,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error,r2_score
 from sklearn.linear_model import Ridge, Lasso, ElasticNet, LinearRegression
 
-address = "C:/Users/yz_ze/Documents/GitHub/SMA-HullTrading-Practicum/Data/"
+address = "D:/Github Repo/SMA-HullTrading-Practicum/Data/"
 SPYstat = address+"SPYstationarity.txt"
 SPYdaily = address+"SPYdaily.txt"
 
@@ -43,11 +43,11 @@ X_train, X_test, y_train, y_test = train_test_split(df_daily_SPY, target,
                                                     test_size=0.2,
                                                     random_state=42)
 
-features =  df_daily_SPY.columns
+features = df_daily_SPY.columns
 
 # Trending for Ridge
 ## 0-0.01 study
-alpha = np.arange(0,0.0002,1e-7)
+alpha = np.linspace(0,0.02,1000)
 ridge_df = pd.DataFrame()
 
 for i in range(len(alpha)):
@@ -61,21 +61,18 @@ for i in range(len(alpha)):
 ridge_df = ridge_df.set_index(features)
 ridge_df = ridge_df.transpose()
 
-fig, ax1 = plt.subplots()
+ax1 = ridge_df.plot(logx=True,grid=True)
 
-ax1.plot(ridge_df)
-
-ax1.set_xscale('log')
-plt.ylim(-0.05,0.05)
 plt.legend(bbox_to_anchor=(1.05, 1), loc='best', borderaxespad=0.)
-plt.title("Ridge With 0 - 0.5 Range")
+plt.title("Ridge With 0 - 0.02 Range")
 plt.ylabel("Coefficient")
 plt.xlabel("Lambda Value")
+plt.figure(figsize=(20,20))
 
 
 # Trending for Lasso
 ## 0-0.1 study
-alpha = np.arange(0,0.0002,1e-7)
+alpha = np.linspace(0,0.00002,1000)
 lasso_df = pd.DataFrame()
 
 for i in range(len(alpha)):
@@ -89,13 +86,10 @@ for i in range(len(alpha)):
 lasso_df = lasso_df.set_index(features)
 lasso_df = lasso_df.transpose()
 
-fig, ax1 = plt.subplots()
+ax1=lasso_df.plot(logx=True,grid=True)
 
-ax1.plot(lasso_df,labels=features)
-
-ax1.set_xscale('log')
-plt.ylim(-0.05,0.05)
 plt.legend(bbox_to_anchor=(1.05, 1), loc='best', borderaxespad=0.)
-plt.title("Lasso With 0 - 0.05 Range")
+plt.title("Lasso With 0 - 5e-5 Range")
 plt.ylabel("Coefficient")
 plt.xlabel("Alpha Value")
+plt.figure(figsize=(20,10))
