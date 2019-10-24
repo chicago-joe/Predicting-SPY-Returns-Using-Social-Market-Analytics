@@ -16,7 +16,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error,r2_score
 from sklearn.linear_model import Ridge, Lasso, ElasticNet, LinearRegression
 
-address = "C:/Users/jloss/PyCharmProjects/SMA-HullTrading-Practicum/Source Code/week 6/"
+address = "D:/Github Repo/SMA-HullTrading-Practicum/Data/"
 SPYstat = address+"SPYstationarity.txt"
 SPYdaily = address+"SPYdaily.txt"
 
@@ -69,11 +69,29 @@ stationary_feature_names=df_stationary_final.columns
 
 # These principal components are calculated only from features and no information from classes are considered.
 # We can make a heat-plot to see how the features mixed up to create the components.
+plt.figure(figsize=(20,15))
+
+hm = sns.heatmap(pca.components_,
+                 cbar=False,
+                 annot=True,
+                 square=True,
+                 fmt='.2f',
+                 annot_kws={'size': 13},
+                 yticklabels=['1st Comp','2nd Comp','3rd Comp','4th Comp'],
+                 xticklabels=stationary_feature_names)
+
+plt.xticks(fontsize=12,rotation=50)
+
+hm
+
+
 plt.matshow(pca.components_,cmap='viridis')
-plt.yticks([0,1,2],['1st Comp','2nd Comp','3rd Comp'],fontsize=10)
+plt.yticks([0,1,2,3],['1st Comp','2nd Comp','3rd Comp','4th Comp'],fontsize=10)
 plt.colorbar()
 plt.xticks(range(len(stationary_feature_names)),stationary_feature_names,rotation=65,ha='left')
-plt.show()#
+plt.figure(figsize=(20,20))
+plt.show()
+
 
 # check the correlation plots to see how 1st principal component is affected by
 # mean concave points and worst texture.
