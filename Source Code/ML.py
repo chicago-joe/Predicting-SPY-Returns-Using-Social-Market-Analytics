@@ -43,10 +43,11 @@ X_train, X_test, y_train, y_test = train_test_split(df_daily_SPY, target,
                                                     test_size=0.2,
                                                     random_state=42)
 
+features =  df_daily_SPY.columns
 
 # Trending for Ridge
-## 0-0.5 study
-alpha = np.arange(0,0.5,0.005)
+## 0-0.01 study
+alpha = np.arange(0,0.0002,1e-7)
 ridge_df = pd.DataFrame()
 
 for i in range(len(alpha)):
@@ -57,34 +58,44 @@ for i in range(len(alpha)):
     
     ridge_df[float(alpha[i])] = ridge.coef_
 
+ridge_df = ridge_df.set_index(features)
 ridge_df = ridge_df.transpose()
 
-ridge_df.plot()
+fig, ax1 = plt.subplots()
+
+ax1.plot(ridge_df)
+
+ax1.set_xscale('log')
 plt.ylim(-0.05,0.05)
 plt.legend(bbox_to_anchor=(1.05, 1), loc='best', borderaxespad=0.)
 plt.title("Ridge With 0 - 0.5 Range")
 plt.ylabel("Coefficient")
-plt.xlabel("Alpha Value")
+plt.xlabel("Lambda Value")
 
-## 0-0.05 study
-alpha = np.arange(0,0.0005,0.000005)
-ridge_df = pd.DataFrame()
-
-for i in range(len(alpha)):
-    ridge = Ridge(alpha=alpha[i])
-    ridge.fit(X_train, y_train)
-    y_train_pred = ridge.predict(X_train)
-    y_test_pred = ridge.predict(X_test)
-    
-    ridge_df[float(alpha[i])] = ridge.coef_
-
-ridge_df = ridge_df.transpose()
-
-ridge_df.plot()
-plt.ylim(-0.05,0.05)
-plt.legend(bbox_to_anchor=(1.05, 1), loc='best', borderaxespad=0.)
-plt.title("Ridge With 0 - 0.05 Range")
-plt.ylabel("Coefficient")
-plt.xlabel("Alpha Value")
 
 # Trending for Lasso
+## 0-0.1 study
+alpha = np.arange(0,0.0002,1e-7)
+lasso_df = pd.DataFrame()
+
+for i in range(len(alpha)):
+    lasso = Lasso(alpha=alpha[i])
+    lasso.fit(X_train, y_train)
+    y_train_pred = lasso.predict(X_train)
+    y_test_pred = lasso.predict(X_test)
+    
+    lasso_df[float(alpha[i])] = lasso.coef_
+
+lasso_df = lasso_df.set_index(features)
+lasso_df = lasso_df.transpose()
+
+fig, ax1 = plt.subplots()
+
+ax1.plot(lasso_df,labels=features)
+
+ax1.set_xscale('log')
+plt.ylim(-0.05,0.05)
+plt.legend(bbox_to_anchor=(1.05, 1), loc='best', borderaxespad=0.)
+plt.title("Lasso With 0 - 0.05 Range")
+plt.ylabel("Coefficient")
+plt.xlabel("Alpha Value")
