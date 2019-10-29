@@ -16,7 +16,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error,r2_score
 from sklearn.linear_model import Ridge, Lasso, ElasticNet, LinearRegression
 
-address = "D:/Github Repo/SMA-HullTrading-Practicum/Data/"
+address = "C:/Users/jloss/PyCharmProjects/SMA-HullTrading-Practicum/Source Code/Week 6/"
 SPYstat = address+"SPYstationarity.txt"
 SPYdaily = address+"SPYdaily.txt"
 
@@ -51,7 +51,7 @@ X_scaled = scaler.transform(df_stationary_final)
 
 # check the min/max of the scaled featuress:
 print("\nAfter scaling minimum: ", X_scaled.min(axis=0))
-pca = PCA(n_components = 4)
+pca = PCA(n_components = 6)
 pca.fit(X_scaled)
 X_pca=pca.transform(X_scaled)
 
@@ -96,7 +96,12 @@ plt.show()
 # check the correlation plots to see how 1st principal component is affected by
 # mean concave points and worst texture.
 # Here we show the correlation plot of ‘worst’ values of the features:
-feature_worst=list(df_stationary_final.columns[20:31]) # select the 'worst' featuresimport seaborn as snss=sns.heatmap(cancer_df[feature_worst].corr(),cmap='coolwarm')
-s.set_yticklabels(s.get_yticklabels(),rotation=30,fontsize=7)
-s.set_xticklabels(s.get_xticklabels(),rotation=30,fontsize=7)
-plt.show()
+# feature_worst=list(df_stationary_final.columns[20:31]) # select the 'worst' featuresimport seaborn as snss=sns.heatmap(cancer_df[feature_worst].corr(),cmap='coolwarm')
+# s.set_yticklabels(s.get_yticklabels(),rotation=30,fontsize=7)
+# s.set_xticklabels(s.get_xticklabels(),rotation=30,fontsize=7)
+# plt.show()
+
+# use predictions from the principal components to
+# use same matrix
+# use in-sample
+# fit to in-sample
