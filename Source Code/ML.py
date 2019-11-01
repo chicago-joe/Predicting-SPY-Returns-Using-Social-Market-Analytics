@@ -17,7 +17,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error,r2_score,accuracy_score
 from sklearn.linear_model import Ridge, Lasso, ElasticNet, LinearRegression
 
-address = "D:/Github Repo/SMA-HullTrading-Practicum/Data/"
+address = "C:/Users/yz_ze/Documents/GitHub/SMA-HullTrading-Practicum/Data/"
 SPYstat = address+"SPYstationarity.txt"
 SPYdaily = address+"SPYdaily.txt"
 
@@ -49,7 +49,7 @@ features = df_daily_SPY.columns
 
 # Trending for Ridge
 ## 0-0.01 study
-alpha = np.linspace(0,0.02,1000)
+alpha = np.linspace(0,0.005,10000)
 ridge_df = pd.DataFrame()
 ridge_score = {}
 
@@ -75,7 +75,6 @@ plt.xlabel("Lambda Value")
 plt.figure(figsize=(20,20))
 
 plt.plot(list(ridge_score.keys()),list(ridge_score.values()))
-plt.grid()
 plt.xlim(0)
 plt.title("Ridge score")
 plt.xlabel("Lambda")
