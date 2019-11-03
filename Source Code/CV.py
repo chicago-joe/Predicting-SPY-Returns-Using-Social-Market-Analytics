@@ -22,7 +22,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.linear_model import Ridge, Lasso, ElasticNet, LinearRegression
 
 
-address = "C:/Users/yz_ze/Documents/GitHub/SMA-HullTrading-Practicum/Data/"
+address = "./"
 SPYstat = address + "SPYstationarity.txt"
 SPYdaily = address + "SPYdaily.txt"
 
@@ -37,6 +37,7 @@ df_daily_SPY.set_index('Date', inplace = True)
 target = df_daily_SPY["next_Return"]
 df_daily_SPY = df_daily_SPY.drop(["next_Return"], axis = 1)
 df_daily_SPY = df_daily_SPY.drop(["today_Return"], axis = 1)
+df_daily_SPY = df_daily_SPY.drop(["classret"], axis = 1)
 
 # filter for unstationary
 features = df_daily_SPY.columns
@@ -70,7 +71,7 @@ result.to_csv(address + "grid result for EN.csv")
 
 
 
-address = "C:/Users/yz_ze/Documents/GitHub/SMA-HullTrading-Practicum/Data/"
+address = "./"
 SPYstat = address + "SPYstationarity.txt"
 SPYdaily = address + "SPYdaily.txt"
 
@@ -85,6 +86,7 @@ df_daily_SPY.set_index('Date', inplace = True)
 target = df_daily_SPY["next_Return"]
 df_daily_SPY = df_daily_SPY.drop(["next_Return"], axis = 1)
 df_daily_SPY = df_daily_SPY.drop(["today_Return"], axis = 1)
+df_daily_SPY = df_daily_SPY.drop(["classret"], axis = 1)
 
 # filter for unstationary
 features = df_daily_SPY.columns
