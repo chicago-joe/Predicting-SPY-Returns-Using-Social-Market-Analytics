@@ -22,7 +22,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.linear_model import Ridge, Lasso, ElasticNet, LinearRegression
 
 
-address = "./"
+address = "D:/Codes/Github/SMA-HullTrading-Practicum/Data/"
 SPYstat = address + "SPYstationarity.txt"
 SPYdaily = address + "SPYdaily.txt"
 
@@ -45,10 +45,13 @@ for name in features:
     if df_stat_SPY[name].bool() == False:
         df_daily_SPY = df_daily_SPY.drop([name], axis = 1)
 
+# standardize the data
 sc = StandardScaler()
 sc.fit(df_daily_SPY)
 df_daily_SPY = sc.transform(df_daily_SPY)
 
+## ElasticNet Hyper Tuning
+# Tuning grid set up
 param_grid = {'alpha':np.linspace(0,0.005,10000),
               'l1_ratio':np.linspace(0,1,10)}
 
