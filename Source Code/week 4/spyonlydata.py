@@ -413,7 +413,7 @@ def mix():
 def newmix():
     today_Return,next_Return,classret=SPY()
     result=pd.DataFrame()
-    etfsmean=newdatatrans(['SPY'],df)
+    etfsmean=newdatatrans(['ES_F'],df)
     for ticker in etfsmean:
         if len(result)==0:
             oneticker=etfsmean[ticker]
@@ -537,8 +537,8 @@ def SPYmin(fullpathlist):
     return dfout
  
 
-tickerlist=['SPY']
-fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
+tickerlist=['ES_F']
+fullpathlist,filelist=readfilepath(['./F1m2015/','./F1m2016/','./F1m2017/'],tickerlist)
 
 #dfout=SPYticker(fullpathlist)
 df=readdata('./SPYdailydata.txt')
@@ -552,8 +552,8 @@ SPYdailydata['s_deltaSPY']=(SPYdailydata['raw_sSPY'][1:]-SPYdailydata['raw_sSPY'
 
 
 #################################################################################################
-tickerlist=['SPY1min']
-fullpathlist,filelist=readfilepath(['./2015/','./2016/','./2017/'],tickerlist)
+tickerlist=['ES_F']
+fullpathlist,filelist=readfilepath(['./F1m2015/','./F1m2016/','./F1m2017/'],tickerlist)
 
 #dfout=SPYmin(fullpathlist)
 df=readdata('./SPYmin.txt')
