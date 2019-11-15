@@ -18,11 +18,9 @@ import pandas as pd
 import time
 import numpy as np 
 import pywt #导入PyWavelets
-from datetime import timedelta  
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from statsmodels.tsa.stattools import adfuller   
-from sklearn.preprocessing import StandardScaler
 
 
 def oneheat(result):
@@ -109,20 +107,14 @@ def SPY():
     sd_Return=today_Return.iloc[::-1].rolling(250).std().iloc[::-1]
     sd_Return=sd_Return.dropna()
     sd_Return=sd_Return[1:]
-    #print(spydata)
-    #print(D2spydata)
-    #print(etfsmean)
-    #s1=(next_Return).std()*0.1
-    #s2=(next_Return).std()*2.0
-    #s0=(next_Return).std()*-0.1
-    #sn1=(next_Return).std()*-2.0
-    classret=[ 2  if next_Return[date]>sd_Return[date]*2.0 else 1 if next_Return[date]>sd_Return[date]*0.5 else 0 if next_Return[date]>sd_Return[date]*-0.5 else -1 if next_Return[date]>sd_Return[date]*-2.0 else -2 for date in sd_Return.index]
+
+    classret=[ 2  if next_Return[date]>sd_Return[date]*1.0 else 1 if next_Return[date]>sd_Return[date]*0.05 else 0 if next_Return[date]>sd_Return[date]*-0.05 else -1 if next_Return[date]>sd_Return[date]*-1.0 else -2 for date in sd_Return.index]
     #classret=[ 2  if ret>s2 else 1 if ret>s1 else 0 if ret>s0 else -1 if ret>sn1 else -2 for ret in next_Return]
     classret=pd.DataFrame(classret)
     classret.index=sd_Return.index
     classret.columns=['classret']
     
-    todayclassret=[ 2  if today_Return[date]>sd_Return[date]*2.0 else 1 if today_Return[date]>sd_Return[date]*0.5 else 0 if today_Return[date]>sd_Return[date]*-0.5 else -1 if today_Return[date]>sd_Return[date]*-2.0 else -2 for date in sd_Return.index]
+    todayclassret=[ 2  if today_Return[date]>sd_Return[date]*1.0 else 1 if today_Return[date]>sd_Return[date]*0.05 else 0 if today_Return[date]>sd_Return[date]*-0.05 else -1 if today_Return[date]>sd_Return[date]*-1.0 else -2 for date in sd_Return.index]
     #classret=[ 2  if ret>s2 else 1 if ret>s1 else 0 if ret>s0 else -1 if ret>sn1 else -2 for ret in next_Return]
     todayclassret=pd.DataFrame(todayclassret)
     todayclassret.index=sd_Return.index
@@ -153,67 +145,67 @@ def spydata():
     #excluding weekends
     #removing empty columns
     df = df.dropna(axis='columns')
-    df=df.drop(columns=['ticker','date','description','center-date','center-time','center-time-zone'])
+    df=df.drop(columns=['ticker','date','description','center-date','center-time','center-time-zone', 'raw-s-delta', 'volume-delta'])
     df["volume_base_s"]=df["raw_s"]/df["s-volume"]
     
     #calculating ewm
-    df["ewm_last20_volume_base_s"] = df.groupby("Date")["volume_base_s"].apply(lambda x: x.ewm(span=20).mean())
-    df["ewm_last20_raw_s"] = df.groupby("Date")["raw_s"].apply(lambda x: x.ewm(span=20).mean())
-    df["ewm_last20_s_volume"] = df.groupby("Date")["s-volume"].apply(lambda x: x.ewm(span=20).mean())
-    df["ewm_last20_s_dispersion"] = df.groupby("Date")["s-dispersion"].apply(lambda x: x.ewm(span=20).mean())
+#    df["ewm_last20_volume_base_s"] = df.groupby("Date")["volume_base_s"].apply(lambda x: x.ewm(span=20).mean())
+#    df["ewm_last20_raw_s"] = df.groupby("Date")["raw_s"].apply(lambda x: x.ewm(span=20).mean())
+#    df["ewm_last20_s_volume"] = df.groupby("Date")["s-volume"].apply(lambda x: x.ewm(span=20).mean())
+#    df["ewm_last20_s_dispersion"] = df.groupby("Date")["s-dispersion"].apply(lambda x: x.ewm(span=20).mean())
     
     df["ewm_volume_base_s"] = df.groupby("Date")["volume_base_s"].apply(lambda x: x.ewm(span=390).mean())
-    df["ewm_raw_s"] = df.groupby("Date")["raw_s"].apply(lambda x: x.ewm(span=390).mean())
-    df["ewm_s_volume"] = df.groupby("Date")["s-volume"].apply(lambda x: x.ewm(span=390).mean())
-    df["ewm_s_dispersion"] = df.groupby("Date")["s-dispersion"].apply(lambda x: x.ewm(span=390).mean())
-    
+#    df["ewm_raw_s"] = df.groupby("Date")["raw_s"].apply(lambda x: x.ewm(span=390).mean())
+#    df["ewm_s_volume"] = df.groupby("Date")["s-volume"].apply(lambda x: x.ewm(span=390).mean())
+#    df["ewm_s_dispersion"] = df.groupby("Date")["s-dispersion"].apply(lambda x: x.ewm(span=390).mean())
+#    
     
     #taking the close only
     dffinal = df.groupby('Date').last().reset_index()
     dffinal.index=dffinal['Date']
     dffinal["mean_volume_base_s"] = df.groupby("Date")["volume_base_s"].mean()
     dffinal["mean_raw_s"] = df.groupby("Date")["raw_s"].mean()
-    dffinal["mean_s_volume"] = df.groupby("Date")["s-volume"].mean()
+#    dffinal["mean_s_volume"] = df.groupby("Date")["s-volume"].mean()
     dffinal["mean_s_dispersion"] = df.groupby("Date")["s-dispersion"].mean()
-    dffinal["count"] = df.groupby("Date")["raw_s"].count()
-    dffinal["daily_min_raw_s"] = df.groupby("Date")["raw_s"].min()
-    dffinal["daily_q1_raw_s"] = df.groupby("Date")["raw_s"].quantile(.25)
-    dffinal["daily_mid_raw_s"] = df.groupby("Date")["raw_s"].quantile(.5)
-    dffinal["daily_q2_raw_s"] = df.groupby("Date")["raw_s"].quantile(.75)
-    dffinal["daily_max_raw_s"] = df.groupby("Date")["raw_s"].max()
-    dffinal["daily_sd_volume_base_s"] = df.groupby("Date")["volume_base_s"].std()
-    dffinal["daily_sd_raw_s"] = df.groupby("Date")["raw_s"].std()
-    dffinal["daily_sd_s_volume"] = df.groupby("Date")["s-volume"].std()
-    dffinal["daily_sd_s_dispersion"] = df.groupby("Date")["s-dispersion"].std()
-    dffinal["volume_base_s_coff"] = df.groupby("Date")["volume_base_s"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
-    dffinal["raw_s_coff"] = df.groupby("Date")["raw_s"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
-    dffinal["s_volume_coff"] = df.groupby("Date")["s-volume"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
-    dffinal["s_dispersion_coff"] = df.groupby("Date")["s-dispersion"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
-    dffinal["volume_base_s_deg"] = df.groupby("Date")["volume_base_s"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
-    dffinal["raw_s_deg"] = df.groupby("Date")["raw_s"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
-    dffinal["s_volume_deg"] = df.groupby("Date")["s-volume"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
-    dffinal["s_dispersion_deg"] = df.groupby("Date")["s-dispersion"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
-    dffinal["volume_base_s_wave"] = df.groupby("Date")["volume_base_s"].apply(lambda x: len(pywt.wavedec(x,'db1')))
-    dffinal["raw_s_wave"] = df.groupby("Date")["raw_s"].apply(lambda x: len(pywt.wavedec(x,'db1')))
-    dffinal["s_volume_wave"] = df.groupby("Date")["s-volume"].apply(lambda x: len(pywt.wavedec(x,'db1')))
-    dffinal["s_dispersion_wave"] = df.groupby("Date")["s-dispersion"].apply(lambda x: len(pywt.wavedec(x,'db1')))
-    
-    
-    
-    dffinal['volume_base_s_delta']=(dffinal['mean_volume_base_s'][1:]-dffinal['mean_volume_base_s'][:-1].values)
-    dffinal['raw-s-delta']=(dffinal['mean_raw_s'][1:]-dffinal['mean_raw_s'][:-1].values)
-    dffinal['volume-delta']=(dffinal['mean_s_volume'][1:]-dffinal['mean_s_volume'][:-1].values)
-    dffinal['s_dispersion_delta']=(dffinal['mean_s_dispersion'][1:]-dffinal['mean_s_dispersion'][:-1].values)
+#    dffinal["count"] = df.groupby("Date")["raw_s"].count()
+#    dffinal["daily_min_raw_s"] = df.groupby("Date")["raw_s"].min()
+#    dffinal["daily_q1_raw_s"] = df.groupby("Date")["raw_s"].quantile(.25)
+#    dffinal["daily_mid_raw_s"] = df.groupby("Date")["raw_s"].quantile(.5)
+#    dffinal["daily_q2_raw_s"] = df.groupby("Date")["raw_s"].quantile(.75)
+#    dffinal["daily_max_raw_s"] = df.groupby("Date")["raw_s"].max()
+#    dffinal["daily_sd_volume_base_s"] = df.groupby("Date")["volume_base_s"].std()
+#    dffinal["daily_sd_raw_s"] = df.groupby("Date")["raw_s"].std()
+#    dffinal["daily_sd_s_volume"] = df.groupby("Date")["s-volume"].std()
+#    dffinal["daily_sd_s_dispersion"] = df.groupby("Date")["s-dispersion"].std()
+#    dffinal["volume_base_s_coff"] = df.groupby("Date")["volume_base_s"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
+#    dffinal["raw_s_coff"] = df.groupby("Date")["raw_s"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
+#    dffinal["s_volume_coff"] = df.groupby("Date")["s-volume"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
+#    dffinal["s_dispersion_coff"] = df.groupby("Date")["s-dispersion"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
+#    dffinal["volume_base_s_deg"] = df.groupby("Date")["volume_base_s"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
+#    dffinal["raw_s_deg"] = df.groupby("Date")["raw_s"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
+#    dffinal["s_volume_deg"] = df.groupby("Date")["s-volume"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
+#    dffinal["s_dispersion_deg"] = df.groupby("Date")["s-dispersion"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
+#    dffinal["volume_base_s_wave"] = df.groupby("Date")["volume_base_s"].apply(lambda x: len(pywt.wavedec(x,'db1')))
+#    dffinal["raw_s_wave"] = df.groupby("Date")["raw_s"].apply(lambda x: len(pywt.wavedec(x,'db1')))
+#    dffinal["s_volume_wave"] = df.groupby("Date")["s-volume"].apply(lambda x: len(pywt.wavedec(x,'db1')))
+#    dffinal["s_dispersion_wave"] = df.groupby("Date")["s-dispersion"].apply(lambda x: len(pywt.wavedec(x,'db1')))
+#    
+#    
+#    
+#    dffinal['volume_base_s_delta']=(dffinal['mean_volume_base_s'][1:]-dffinal['mean_volume_base_s'][:-1].values)
+#    dffinal['raw-s-delta']=(dffinal['mean_raw_s'][1:]-dffinal['mean_raw_s'][:-1].values)
+#    dffinal['volume-delta']=(dffinal['mean_s_volume'][1:]-dffinal['mean_s_volume'][:-1].values)
+#    dffinal['s_dispersion_delta']=(dffinal['mean_s_dispersion'][1:]-dffinal['mean_s_dispersion'][:-1].values)
     
     dffinal['volume_base_s_z']=(dffinal['mean_volume_base_s']-dffinal['mean_volume_base_s'].rolling(26).mean())/dffinal['mean_volume_base_s'].rolling(26).std()
-    dffinal['raw_s_z']=(dffinal['mean_raw_s']-dffinal['mean_raw_s'].rolling(26).mean())/dffinal['mean_raw_s'].rolling(26).std()
-    dffinal['s_volume_z']=(dffinal['mean_s_volume']-dffinal['mean_s_volume'].rolling(26).mean())/dffinal['mean_s_volume'].rolling(26).std()
+#    dffinal['raw_s_z']=(dffinal['mean_raw_s']-dffinal['mean_raw_s'].rolling(26).mean())/dffinal['mean_raw_s'].rolling(26).std()
+#    dffinal['s_volume_z']=(dffinal['mean_s_volume']-dffinal['mean_s_volume'].rolling(26).mean())/dffinal['mean_s_volume'].rolling(26).std()
     dffinal['s_dispersion_z']=(dffinal['mean_s_dispersion']-dffinal['mean_s_dispersion'].rolling(26).mean())/dffinal['mean_s_dispersion'].rolling(26).std()
-    
-    dffinal['volume_base_s_MACD_ewma12-ewma26'] = dffinal["mean_volume_base_s"].ewm(span=12).mean() - dffinal["mean_volume_base_s"].ewm(span=26).mean()
+#    
+#    dffinal['volume_base_s_MACD_ewma12-ewma26'] = dffinal["mean_volume_base_s"].ewm(span=12).mean() - dffinal["mean_volume_base_s"].ewm(span=26).mean()
     dffinal['raw_s_MACD_ewma12-ewma26'] = dffinal["mean_raw_s"].ewm(span=12).mean() - dffinal["mean_raw_s"].ewm(span=26).mean()
-    dffinal['s_volume_MACD_ewma12-ewma26'] = dffinal["mean_s_volume"].ewm(span=12).mean() - dffinal["mean_s_volume"].ewm(span=26).mean()
-    dffinal['s_dispersion_MACD_ewma12-ewma26'] = dffinal["mean_s_dispersion"].ewm(span=12).mean() - dffinal["mean_s_dispersion"].ewm(span=26).mean()
+#    dffinal['s_volume_MACD_ewma12-ewma26'] = dffinal["mean_s_volume"].ewm(span=12).mean() - dffinal["mean_s_volume"].ewm(span=26).mean()
+#    dffinal['s_dispersion_MACD_ewma12-ewma26'] = dffinal["mean_s_dispersion"].ewm(span=12).mean() - dffinal["mean_s_dispersion"].ewm(span=26).mean()
     
     newtime = time.time()
     print('compute data time: %.3f' % (
@@ -241,65 +233,66 @@ def futuredata():
     #excluding weekends
     #removing empty columns
     df = df.dropna(axis='columns')
-    df=df.drop(columns=['ticker','date','description','center-date','center-time','center-time-zone'])
+    
+    df=df.drop(columns=['ticker','date','description','center-date','center-time','center-time-zone', 'raw-s-delta', 'volume-delta'])
     df["volume_base_s"]=df["raw_s"]/df["s-volume"]
     
     #calculating ewm
-    df["ewm_last20_volume_base_s"] = df.groupby("Date")["volume_base_s"].apply(lambda x: x.ewm(span=20).mean())
-    df["ewm_last20_raw_s"] = df.groupby("Date")["raw_s"].apply(lambda x: x.ewm(span=20).mean())
-    df["ewm_last20_s_volume"] = df.groupby("Date")["s-volume"].apply(lambda x: x.ewm(span=20).mean())
-    df["ewm_last20_s_dispersion"] = df.groupby("Date")["s-dispersion"].apply(lambda x: x.ewm(span=20).mean())
+#    df["ewm_last20_volume_base_s"] = df.groupby("Date")["volume_base_s"].apply(lambda x: x.ewm(span=20).mean())
+#    df["ewm_last20_raw_s"] = df.groupby("Date")["raw_s"].apply(lambda x: x.ewm(span=20).mean())
+#    df["ewm_last20_s_volume"] = df.groupby("Date")["s-volume"].apply(lambda x: x.ewm(span=20).mean())
+#    df["ewm_last20_s_dispersion"] = df.groupby("Date")["s-dispersion"].apply(lambda x: x.ewm(span=20).mean())
     
     df["ewm_volume_base_s"] = df.groupby("Date")["volume_base_s"].apply(lambda x: x.ewm(span=390).mean())
-    df["ewm_raw_s"] = df.groupby("Date")["raw_s"].apply(lambda x: x.ewm(span=390).mean())
-    df["ewm_s_volume"] = df.groupby("Date")["s-volume"].apply(lambda x: x.ewm(span=390).mean())
-    df["ewm_s_dispersion"] = df.groupby("Date")["s-dispersion"].apply(lambda x: x.ewm(span=390).mean())
-    
+#    df["ewm_raw_s"] = df.groupby("Date")["raw_s"].apply(lambda x: x.ewm(span=390).mean())
+#    df["ewm_s_volume"] = df.groupby("Date")["s-volume"].apply(lambda x: x.ewm(span=390).mean())
+#    df["ewm_s_dispersion"] = df.groupby("Date")["s-dispersion"].apply(lambda x: x.ewm(span=390).mean())
+#    
     
     #taking the close only
     dffinal = df.groupby('Date').last().reset_index()
     dffinal.index=dffinal['Date']
     dffinal["mean_volume_base_s"] = df.groupby("Date")["volume_base_s"].mean()
     dffinal["mean_raw_s"] = df.groupby("Date")["raw_s"].mean()
-    dffinal["mean_s_volume"] = df.groupby("Date")["s-volume"].mean()
+#    dffinal["mean_s_volume"] = df.groupby("Date")["s-volume"].mean()
     dffinal["mean_s_dispersion"] = df.groupby("Date")["s-dispersion"].mean()
-    dffinal["count"] = df.groupby("Date")["raw_s"].count()
-    dffinal["daily_min_raw_s"] = df.groupby("Date")["raw_s"].min()
-    dffinal["daily_q1_raw_s"] = df.groupby("Date")["raw_s"].quantile(.25)
-    dffinal["daily_mid_raw_s"] = df.groupby("Date")["raw_s"].quantile(.5)
-    dffinal["daily_q2_raw_s"] = df.groupby("Date")["raw_s"].quantile(.75)
-    dffinal["daily_max_raw_s"] = df.groupby("Date")["raw_s"].max()
-    dffinal["daily_sd_volume_base_s"] = df.groupby("Date")["volume_base_s"].std()
-    dffinal["daily_sd_raw_s"] = df.groupby("Date")["raw_s"].std()
-    dffinal["daily_sd_s_volume"] = df.groupby("Date")["s-volume"].std()
-    dffinal["daily_sd_s_dispersion"] = df.groupby("Date")["s-dispersion"].std()
-    dffinal["volume_base_s_coff"] = df.groupby("Date")["volume_base_s"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
-    dffinal["raw_s_coff"] = df.groupby("Date")["raw_s"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
-    dffinal["s_volume_coff"] = df.groupby("Date")["s-volume"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
-    dffinal["s_dispersion_coff"] = df.groupby("Date")["s-dispersion"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
-    dffinal["volume_base_s_deg"] = df.groupby("Date")["volume_base_s"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
-    dffinal["raw_s_deg"] = df.groupby("Date")["raw_s"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
-    dffinal["s_volume_deg"] = df.groupby("Date")["s-volume"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
-    dffinal["s_dispersion_deg"] = df.groupby("Date")["s-dispersion"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
-    dffinal["volume_base_s_wave"] = df.groupby("Date")["volume_base_s"].apply(lambda x: len(pywt.wavedec(x,'db1')))
-    dffinal["raw_s_wave"] = df.groupby("Date")["raw_s"].apply(lambda x: len(pywt.wavedec(x,'db1')))
-    dffinal["s_volume_wave"] = df.groupby("Date")["s-volume"].apply(lambda x: len(pywt.wavedec(x,'db1')))
-    dffinal["s_dispersion_wave"] = df.groupby("Date")["s-dispersion"].apply(lambda x: len(pywt.wavedec(x,'db1')))
-    
+#    dffinal["count"] = df.groupby("Date")["raw_s"].count()
+#    dffinal["daily_min_raw_s"] = df.groupby("Date")["raw_s"].min()
+#    dffinal["daily_q1_raw_s"] = df.groupby("Date")["raw_s"].quantile(.25)
+#    dffinal["daily_mid_raw_s"] = df.groupby("Date")["raw_s"].quantile(.5)
+#    dffinal["daily_q2_raw_s"] = df.groupby("Date")["raw_s"].quantile(.75)
+#    dffinal["daily_max_raw_s"] = df.groupby("Date")["raw_s"].max()
+#    dffinal["daily_sd_volume_base_s"] = df.groupby("Date")["volume_base_s"].std()
+#    dffinal["daily_sd_raw_s"] = df.groupby("Date")["raw_s"].std()
+#    dffinal["daily_sd_s_volume"] = df.groupby("Date")["s-volume"].std()
+#    dffinal["daily_sd_s_dispersion"] = df.groupby("Date")["s-dispersion"].std()
+#    dffinal["volume_base_s_coff"] = df.groupby("Date")["volume_base_s"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
+#    dffinal["raw_s_coff"] = df.groupby("Date")["raw_s"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
+#    dffinal["s_volume_coff"] = df.groupby("Date")["s-volume"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
+#    dffinal["s_dispersion_coff"] = df.groupby("Date")["s-dispersion"].apply(lambda x: (pywt.wavedec(x,'db1')[0])[0])
+#    dffinal["volume_base_s_deg"] = df.groupby("Date")["volume_base_s"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
+#    dffinal["raw_s_deg"] = df.groupby("Date")["raw_s"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
+#    dffinal["s_volume_deg"] = df.groupby("Date")["s-volume"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
+#    dffinal["s_dispersion_deg"] = df.groupby("Date")["s-dispersion"].apply(lambda x: len(pywt.wavedec(x,'db1')[0]))
+#    dffinal["volume_base_s_wave"] = df.groupby("Date")["volume_base_s"].apply(lambda x: len(pywt.wavedec(x,'db1')))
+#    dffinal["raw_s_wave"] = df.groupby("Date")["raw_s"].apply(lambda x: len(pywt.wavedec(x,'db1')))
+#    dffinal["s_volume_wave"] = df.groupby("Date")["s-volume"].apply(lambda x: len(pywt.wavedec(x,'db1')))
+#    dffinal["s_dispersion_wave"] = df.groupby("Date")["s-dispersion"].apply(lambda x: len(pywt.wavedec(x,'db1')))
+#    
     dffinal['volume_base_s_delta']=(dffinal['mean_volume_base_s'][1:]-dffinal['mean_volume_base_s'][:-1].values)
-    dffinal['raw-s-delta']=(dffinal['mean_raw_s'][1:]-dffinal['mean_raw_s'][:-1].values)
-    dffinal['volume-delta']=(dffinal['mean_s_volume'][1:]-dffinal['mean_s_volume'][:-1].values)
+#    dffinal['raw-s-delta']=(dffinal['mean_raw_s'][1:]-dffinal['mean_raw_s'][:-1].values)
+#    dffinal['volume-delta']=(dffinal['mean_s_volume'][1:]-dffinal['mean_s_volume'][:-1].values)
     dffinal['s_dispersion_delta']=(dffinal['mean_s_dispersion'][1:]-dffinal['mean_s_dispersion'][:-1].values)
     
-    dffinal['volume_base_s_z']=(dffinal['mean_volume_base_s']-dffinal['mean_volume_base_s'].rolling(26).mean())/dffinal['mean_volume_base_s'].rolling(26).std()
-    dffinal['raw_s_z']=(dffinal['mean_raw_s']-dffinal['mean_raw_s'].rolling(26).mean())/dffinal['mean_raw_s'].rolling(26).std()
-    dffinal['s_volume_z']=(dffinal['mean_s_volume']-dffinal['mean_s_volume'].rolling(26).mean())/dffinal['mean_s_volume'].rolling(26).std()
-    dffinal['s_dispersion_z']=(dffinal['mean_s_dispersion']-dffinal['mean_s_dispersion'].rolling(26).mean())/dffinal['mean_s_dispersion'].rolling(26).std()
-    
-    dffinal['volume_base_s_MACD_ewma12-ewma26'] = dffinal["mean_volume_base_s"].ewm(span=12).mean() - dffinal["mean_volume_base_s"].ewm(span=26).mean()
+#    dffinal['volume_base_s_z']=(dffinal['mean_volume_base_s']-dffinal['mean_volume_base_s'].rolling(26).mean())/dffinal['mean_volume_base_s'].rolling(26).std()
+#    dffinal['raw_s_z']=(dffinal['mean_raw_s']-dffinal['mean_raw_s'].rolling(26).mean())/dffinal['mean_raw_s'].rolling(26).std()
+#    dffinal['s_volume_z']=(dffinal['mean_s_volume']-dffinal['mean_s_volume'].rolling(26).mean())/dffinal['mean_s_volume'].rolling(26).std()
+#    dffinal['s_dispersion_z']=(dffinal['mean_s_dispersion']-dffinal['mean_s_dispersion'].rolling(26).mean())/dffinal['mean_s_dispersion'].rolling(26).std()
+#    
+#    dffinal['volume_base_s_MACD_ewma12-ewma26'] = dffinal["mean_volume_base_s"].ewm(span=12).mean() - dffinal["mean_volume_base_s"].ewm(span=26).mean()
     dffinal['raw_s_MACD_ewma12-ewma26'] = dffinal["mean_raw_s"].ewm(span=12).mean() - dffinal["mean_raw_s"].ewm(span=26).mean()
-    dffinal['s_volume_MACD_ewma12-ewma26'] = dffinal["mean_s_volume"].ewm(span=12).mean() - dffinal["mean_s_volume"].ewm(span=26).mean()
-    dffinal['s_dispersion_MACD_ewma12-ewma26'] = dffinal["mean_s_dispersion"].ewm(span=12).mean() - dffinal["mean_s_dispersion"].ewm(span=26).mean()
+#    dffinal['s_volume_MACD_ewma12-ewma26'] = dffinal["mean_s_volume"].ewm(span=12).mean() - dffinal["mean_s_volume"].ewm(span=26).mean()
+#    dffinal['s_dispersion_MACD_ewma12-ewma26'] = dffinal["mean_s_dispersion"].ewm(span=12).mean() - dffinal["mean_s_dispersion"].ewm(span=26).mean()
     
     newtime = time.time()
     print('compute data time: %.3f' % (
@@ -312,10 +305,12 @@ def using_mstats(s):
     return winsorize(s, limits=[0.005, 0.005])
 
 df=spydata()
-df1=df.drop(columns=['Date','raw_s','s-volume','s-dispersion','Time','volume_base_s','raw_s_deg','s_volume_deg','s_dispersion_deg'])
+#df1=df.drop(columns=['Date','raw_s','s-volume','s-dispersion','Time','volume_base_s','raw_s_deg','s_volume_deg','s_dispersion_deg'])
+df1=df.drop(columns=['Date','raw_s','s-volume','s-dispersion','Time','volume_base_s'])
 df1.columns="spy_"+df1.columns
 df=futuredata()
-df2=df.drop(columns=['Date','raw_s','s-volume','s-dispersion','Time','volume_base_s','raw_s_deg','s_volume_deg','s_dispersion_deg'])
+#df2=df.drop(columns=['Date','raw_s','s-volume','s-dispersion','Time','volume_base_s','raw_s_deg','s_volume_deg','s_dispersion_deg'])
+df2=df.drop(columns=['Date','raw_s','s-volume','s-dispersion','Time','volume_base_s'])
 df2.columns="future_"+df2.columns
 testdf = pd.concat([df1, df2], axis=1, sort=False)
 today_Return,next_Return,classret,todayclassret=SPY()
@@ -387,6 +382,8 @@ for i in slist.columns:
 #factors.remove("s_dispersion_deg")
 factors.remove("classret")
 factors.remove("next_Return")
+#factors.remove("todayclassret")
+#factors.remove("today_Return")
 
 train_x=df_train[factors]
 
@@ -414,14 +411,11 @@ print('outlier use: %.3fs' % (
     ))
 
 
-sc_X = StandardScaler()
-train_x_std = sc_X.fit_transform(train_x)
-test_x_std = sc_X.transform(test_x)
 
 
 print('start heatmap')
 oldtime = time.time()
-oneheat(train_x_std)
+oneheat(train_x)
 newtime = time.time()
 print('heatmap use: %.3fs' % (
         newtime - oldtime
@@ -429,10 +423,10 @@ print('heatmap use: %.3fs' % (
 
 
 
-train_x_std.to_csv('train_x_std.txt', sep=',')
+train_x.to_csv('train_x.txt', sep=',')
 train_y.to_csv('train_y.txt', sep=',')
 train_y_class.to_csv('train_y_class.txt', sep=',')
-test_x_std.to_csv('test_x_std.txt', sep=',')
+test_x.to_csv('test_x.txt', sep=',')
 test_y.to_csv('test_y.txt', sep=',')
 test_y_class.to_csv('test_y_class.txt', sep=',')
 
