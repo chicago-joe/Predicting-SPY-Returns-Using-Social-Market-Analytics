@@ -8,21 +8,20 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 import pylab as plot
 import matplotlib.pyplot as plt
-from sklearn.model_selection import GridSearchCV 
-
-
+from sklearn.model_selection import GridSearchCV
 
 import os
 os.chdir('/Users/jloss/PyCharmProjects/SMA-HullTrading-Practicum/Source Code/week 8/')
+
 train_x ="train_x.txt"
 train_y ="train_y.txt"
 test_x = "test_x.txt"
 test_y ="test_y.txt"
-
 
 # read in-sample and out-sample datasets
 y_train = pd.read_csv("train_y.txt", sep = ',', header = None)
@@ -45,33 +44,31 @@ X_test.set_index('Date', inplace = True)
 sc_X = StandardScaler()
 X_train_std = sc_X.fit_transform(X_train)
 X_test_std = sc_X.transform(X_test)
-
-# y_train = np.array(y_train).reshape(-1,1)
-y_train = np.ravel(y_train)
-
+y_train = np.array(y_train).reshape(-1,1)
 
 ## Random Forests Model: Variance-Reduction Approach
 names = X_train.columns.tolist()
 featNames = np.array(names)
 
-RFmodel = RandomForestRegressor(n_estimators = 100,     # should be between 100 to 500
-                                criterion = 'mse',
-                                max_depth = 1,
+RFmodel = RandomForestRegressor(criterion = 'mse',
                                 max_features = "auto",
-                                # n_jobs = -1,
+                                # n_jobs = 4,
                                 random_state = None)      # Brieman and Cutler recommendation for regression problems
 
 # fit model
-para = {'max_depth':range(1,15), 'min_samples_leaf':range(1,20)}
+para = {'max_leaf_nodes':range(2,52,5),'n_estimators':range(1,201,10)}
 
-CV_forest = GridSearchCV(RFmodel,para,cv=6, n_jobs = 1, iid = True,refit= True)
+CV_forest = GridSearchCV(RFmodel,para,cv=6, n_jobs= 1,iid = True,refit= True)
+
+y_train = np.ravel(y_train)
+y_test = np.ravel(y_test)
 CV_forest.fit(X_train_std, y_train)
 
 print(CV_forest.best_params_)
-best_leaf = CV_forest.best_params_['min_samples_leaf']
-best_depth = CV_forest.best_params_['max_depth']
+best_leaf_nodes = CV_forest.best_params_['max_leaf_nodes']
+best_n = CV_forest.best_params_['n_estimators']
 
-RFmodel = RandomForestRegressor(random_state=None,min_samples_leaf=best_leaf,max_depth=best_depth,n_jobs=-1)
+RFmodel = RandomForestRegressor(n_estimators = best_n,max_leaf_nodes=best_leaf_nodes, n_jobs=-1)
 RFmodel.fit(X_train_std, y_train)
 
 # predict on in-sample and oos
@@ -86,6 +83,7 @@ print('R^2 train: %.3f, test: %.3f' % (
         r2_score(y_train, y_train_pred),
         r2_score(y_test, y_test_pred)))
 
+# RFmodel.score(X_test_std,y_train_std)
 
 # plot Feature Importance of RandomForests model
 featureImportance = RFmodel.feature_importances_
@@ -98,7 +96,6 @@ plot.yticks(barPos, featNames[sorted_idx])
 plot.xlabel('Variable Importance')
 plot.show()
 
-# param config
 up_dir = 0
 down_dir = 0
 for i in range(len(y_test_pred)):
@@ -124,31 +121,4 @@ for i in range(len(y_test_pred)):
         up_dir_pred += 1
     else:
         down_dir_pred += 1
-
-
-# scatter plots
-plt.scatter(y_train_pred,
-            (y_train_pred - y_train),
-            c='steelblue',
-            edgecolors = 'white',
-            marker='o',
-            s=35,
-            alpha=0.9,
-            label='Training data')
-
-plt.scatter(y_test_pred,
-            (y_test_pred - y_test),
-            c='limegreen',
-            edgecolors = 'white',
-            marker='s',
-            s=35,
-            alpha=0.9,
-            label='Test data')
-
-plt.xlabel('Predicted values')
-plt.ylabel('Residuals')
-plt.legend(loc='upper left')
-plt.hlines(y=0, xmin=-4, xmax=5, lw=2, color='black')
-plt.xlim([-4,5])
-plt.show()
-
+    
