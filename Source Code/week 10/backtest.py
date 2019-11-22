@@ -10,10 +10,15 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor,RandomForestClassifier
 from sklearn.metrics import mean_squared_error, r2_score,roc_auc_score,accuracy_score,explained_variance_score
-import pylab as plot
+#import pylab as plot
 import matplotlib.pyplot as plt
 from sklearn.model_selection import GridSearchCV 
+from scipy.stats.mstats import winsorize
+from statsmodels.tsa.stattools import adfuller   
+import warnings
+import copy
 
+warnings.simplefilter("ignore")
 def SPY():
     
     
@@ -51,9 +56,13 @@ def readdata():
     df_2015 = pd.read_csv('SPY2015ActFeed.txt', skiprows = 6, sep = '\t', names = colum_names)
     df_2016 = pd.read_csv('SPY2016ActFeed.txt', skiprows = 6, sep = '\t', names = colum_names)
     df_2017 = pd.read_csv('SPY2017ActFeed.txt', skiprows=6, sep = '\t', names = colum_names)
+    df_2018 = pd.read_csv('SPY2018ActFeed.txt', skiprows=6, sep = '\t', names = colum_names)
+    df_2019 = pd.read_csv('SPY2019ActFeed.txt', skiprows=6, sep = '\t', names = colum_names)
     #aggregating data
     df_temp = df_2015.append(df_2016, ignore_index = True)
-    df_aggregate = df_temp.append(df_2017, ignore_index = True)
+    df_temp = df_temp.append(df_2017, ignore_index = True)
+    df_temp = df_temp.append(df_2018, ignore_index = True)
+    df_aggregate = df_temp.append(df_2019, ignore_index = True)
     df_datetime = df_aggregate['date'].str.split(' ', n = 1, expand = True )
     df_datetime.columns = ['Date', 'Time']
     df = pd.merge(df_aggregate, df_datetime, left_index = True, right_index = True)
@@ -80,8 +89,12 @@ def readdata():
     df_2015 = pd.read_csv('ES_F2015ActFeed.txt', skiprows = 6, sep = '\t', names = colum_names)
     df_2016 = pd.read_csv('ES_F2016ActFeed.txt', skiprows = 6, sep = '\t', names = colum_names)
     df_2017 = pd.read_csv('ES_F2017ActFeed.txt', skiprows=6, sep = '\t', names = colum_names)
+    df_2018 = pd.read_csv('ES_F2018ActFeed.txt', skiprows=6, sep = '\t', names = colum_names)
+    df_2019 = pd.read_csv('ES_F2019ActFeed.txt', skiprows=6, sep = '\t', names = colum_names)
     df_temp = df_2015.append(df_2016, ignore_index = True)
-    df_aggregate = df_temp.append(df_2017, ignore_index = True)
+    df_temp = df_temp.append(df_2017, ignore_index = True)
+    df_temp = df_temp.append(df_2018, ignore_index = True)
+    df_aggregate = df_temp.append(df_2019, ignore_index = True)
     df_datetime = df_aggregate['date'].str.split(' ', n = 1, expand = True )
     df_datetime.columns = ['Date', 'Time']
     df = pd.merge(df_aggregate, df_datetime, left_index = True, right_index = True)
@@ -107,251 +120,156 @@ def readdata():
     sd_Return=sd_Return[1:]
     sd_Return
     sd_Return.columns=['sd_Return']
-    testdf = pd.concat([testdf, next_Return,today_Return,classret,sd_Return,todayclassret], axis=1, sort=False,join='inner')
+    testdf = pd.concat([testdf, next_Return,today_Return,classret,sd_Return,todayclassret], axis=1, sort=False,join='inner').dropna()
     return testdf
 
-testdf=readdata().dropna()
+def using_mstats(s):
+    return winsorize(s, limits=[0.005, 0.005])
 
-X_train=testdf[0:464]
-X_test=testdf[464:]
+def adf_test(timeseries):
+    #print('Results of Augment Dickey-Fuller Test:')
+    dftest = adfuller(timeseries, autolag='AIC')
+    dfoutput = pd.Series(dftest[0:4], index=['Test Statistic','p-value','#Lags Used','Number of Observations Used'])
+    for key,value in dftest[4].items():
+        dfoutput['Critical Value (%s)'%key] = value
+    return(dfoutput)
 
-# Preprocess / Standardize data
-sc_X = StandardScaler()
-X_train_std = sc_X.fit_transform(X_train)
-X_test_std = sc_X.transform(X_test)
+def stationarity(result):
+    plist={}
+    for col in result:
+        if adf_test(result[col])['p-value']<0.05:
+            st=True
+        else:
+            st=False
+        plist[col]=st
+    return plist
 
-y_train = np.array(y_train).reshape(-1,1)
-y_test = np.array(y_test).reshape(-1,1)
+def predict(df,ntrain,ntest):
+    print(df.index[len(df)-1])
+    X_train=df[0:ntrain]
+    X_test=df[ntrain:ntrain+ntest]
+    
+    y_train=X_train['next_Return']
+#    train_y_class=df_train['classret']
+    y_test=X_test['next_Return']
+#    test_y_class=df_test['classret']
+    X_train.drop(['next_Return', 'classret'], axis=1)
+    X_test.drop(['next_Return', 'classret'], axis=1)
+    X_train=X_train.apply(using_mstats, axis=0)
+    maxtrain=X_train.max()
+    mintrain=X_train.min()
+    for col in X_test:
+        X_test[col][X_test[col] < mintrain[col]] = mintrain[col]
+        X_test[col][X_test[col] > maxtrain[col]] = maxtrain[col]
+        
+    slist=(stationarity(X_train))
+    
+    slist=pd.DataFrame(slist, index=[0])
+    factors=[]
+    for i in slist.columns:
+        if slist[i][0]==1:
+            factors.append(i)
+    factors.remove("classret")
+    factors.remove("next_Return")
+    X_train=X_train[factors]
+    X_test=X_test[factors]
 
-#best_leaf_nodes = None
-#best_n = 11
+    # Preprocess / Standardize data
+    sc_X = StandardScaler()
+    X_train_std = sc_X.fit_transform(X_train)
+    X_test_std = sc_X.transform(X_test)
+    y_train = np.array(y_train).reshape(-1,1)
+    y_test = np.array(y_test).reshape(-1,1)
+    
+    best_leaf_nodes = 2
+    best_n = 100
+    
+    RFmodel = RandomForestRegressor(n_estimators = best_n,max_leaf_nodes=best_leaf_nodes,n_jobs=-1)
+    #RFmodel = RandomForestClassifier(n_estimators = best_n,max_leaf_nodes=best_leaf_nodes,n_jobs=-1)
+    RFmodel.fit(X_train_std, y_train)
+    # predict on in-sample and oos
+    y_train_pred = RFmodel.predict(X_train_std)
+    y_test_pred = RFmodel.predict(X_test_std)
 
-RFmodel = RandomForestRegressor(n_estimators = best_n,max_leaf_nodes=best_leaf_nodes,n_jobs=-1)
-#RFmodel = RandomForestClassifier(n_estimators = best_n,max_leaf_nodes=best_leaf_nodes,n_jobs=-1)
-RFmodel.fit(X_train_std, y_train)
-
-
-
-
-# predict on in-sample and oos
-y_train_pred = RFmodel.predict(X_train_std)
-y_test_pred = RFmodel.predict(X_test_std)
-
-print('MSE train: %.3f, test: %.3f' % (
+    print([df.index[len(df)-1],y_test_pred])
+    print('MSE train: %.3f, test: %.3f' % (
         mean_squared_error(y_train, y_train_pred),
         mean_squared_error(y_test, y_test_pred)))
 
-print('R^2 train: %.3f, test: %.3f' % (
-        r2_score(y_train, y_train_pred),
-        r2_score(y_test, y_test_pred)))
-
-#print('accuracy train: %.3f, test: %.3f' % (
-#        accuracy_score(y_train, y_train_pred),
-#        accuracy_score(y_test, y_test_pred)))
-
-print('explanined variance train: %.3f, test: %.3f' % (
-        explained_variance_score(y_train, y_train_pred),
-        explained_variance_score(y_test, y_test_pred)))
-
-# RFmodel.score(X_test_std,y_train_std)
-
-# plot Feature Importance of RandomForests model
-featureImportance = RFmodel.feature_importances_
-featureImportance = featureImportance / featureImportance.max()    # scale by max importance
-sorted_idx = np.argsort(featureImportance)
-barPos = np.arange(sorted_idx.shape[0]) + 0.5
-plot.barh(barPos, featureImportance[sorted_idx], align = 'center')      # chart formatting
-plot.yticks(barPos, featNames[sorted_idx])
-plot.xlabel('Variable Importance')
-plot.show()
-
-
-plt.scatter(y_train_pred.reshape(-1,1),
-            (y_train_pred.reshape(-1,1) - y_train.reshape(-1,1)),
-            c='steelblue',
-            edgecolors = 'white',
-            marker='o',
-            s=35,
-            alpha=0.9,
-            label='Training data')
-plt.scatter(y_test_pred.reshape(-1,1),
-            (y_test_pred.reshape(-1,1) - y_test.reshape(-1,1)),
-            c='limegreen',
-            edgecolors = 'white',
-            marker='s',
-            s=35,
-            alpha=0.9,
-            label='Test data')
-
-plt.xlabel('Predicted values')
-plt.ylabel('Residuals')
-plt.legend(loc='upper left')
-plt.hlines(y=0, xmin=-0.075, xmax=0.075, lw=2, color='black')
-plt.xlim([-0.075,0.075])
-plt.show()
-
-
-up_dir = 0
-down_dir = 0
-up_0_00=0
-up_00_1=0
-up_1_5=0
-up_5=0
-down_0_00=0
-down_00_1=0
-down_1_5=0
-down_5=0
-up_0_00_dir=0
-up_00_1_dir=0
-up_1_5_dir=0
-up_5_dir=0
-down_0_00_dir=0
-down_00_1_dir=0
-down_1_5_dir=0
-down_5_dir=0
-
-pre_up_0_00_dir=0
-pre_up_00_1_dir=0
-pre_up_1_5_dir=0
-pre_up_5_dir=0
-pre_down_0_00_dir=0
-pre_down_00_1_dir=0
-pre_down_1_5_dir=0
-pre_down_5_dir=0
-pred_y=y_test_pred
-for i in range(len(pred_y)):
+    print('R^2 train: %.3f, test: %.3f' % (
+            r2_score(y_train, y_train_pred),
+            r2_score(y_test, y_test_pred)))
     
-    if ((pred_y[i]>0) and (test_y_df.iloc[i,0]>0) and (test_y_df.iloc[i,0]<0.001)):
-        up_0_00_dir += 1
-    elif ((pred_y[i]>0) and (test_y_df.iloc[i,0]>0.001) and (test_y_df.iloc[i,0]<0.01)):
-        up_00_1_dir += 1
-    elif ((pred_y[i]>0) and (test_y_df.iloc[i,0]>0.01) and (test_y_df.iloc[i,0]<0.05)):
-        up_1_5_dir += 1
-    elif ((pred_y[i]>0) and (test_y_df.iloc[i,0]>0.05)):
-        up_5_dir += 1
-    elif ((pred_y[i]<0) and (test_y_df.iloc[i,0]<0) and (test_y_df.iloc[i,0]>-0.001)):
-        down_0_00_dir += 1
-    elif ((pred_y[i]<0) and (test_y_df.iloc[i,0]<-0.001) and (test_y_df.iloc[i,0]>-0.01)):
-        down_00_1_dir += 1
-    elif ((pred_y[i]<0) and (test_y_df.iloc[i,0]<-0.01) and (test_y_df.iloc[i,0]>-0.05)):
-        down_1_5_dir += 1
-    elif ((pred_y[i]<0) and (test_y_df.iloc[i,0]<-0.05)):
-        down_5_dir += 1
-
-
-    if ((pred_y[i]>0.001) and (test_y_df.iloc[i,0]>0) and (test_y_df.iloc[i,0]<0.001)):
-        pre_up_0_00_dir += 1
-    elif ((pred_y[i]>0.001) and (test_y_df.iloc[i,0]>0.001) and (test_y_df.iloc[i,0]<0.01)):
-        pre_up_00_1_dir += 1
-    elif ((pred_y[i]>0.001) and (test_y_df.iloc[i,0]>0.01) and (test_y_df.iloc[i,0]<0.05)):
-        pre_up_1_5_dir += 1
-    elif ((pred_y[i]>0.001) and (test_y_df.iloc[i,0]>0.05)):
-        pre_up_5_dir += 1
-    elif ((pred_y[i]<-0.001) and (test_y_df.iloc[i,0]<0) and (test_y_df.iloc[i,0]>-0.001)):
-        pre_down_0_00_dir += 1
-    elif ((pred_y[i]<-0.001) and (test_y_df.iloc[i,0]<-0.001) and (test_y_df.iloc[i,0]>-0.01)):
-        pre_down_00_1_dir += 1
-    elif ((pred_y[i]<-0.001) and (test_y_df.iloc[i,0]<-0.01) and (test_y_df.iloc[i,0]>-0.05)):
-        pre_down_1_5_dir += 1
-    elif ((pred_y[i]<-0.001) and (test_y_df.iloc[i,0]<-0.05)):
-        pre_down_5_dir += 1
-
+    #print('accuracy train: %.3f, test: %.3f' % (
+    #        accuracy_score(y_train, y_train_pred),
+    #        accuracy_score(y_test, y_test_pred)))
     
-    if ((pred_y[i]>0) and (pred_y[i]<0.001) and (test_y_df.iloc[i,0]>0) and (test_y_df.iloc[i,0]<0.001)):
-        up_0_00 += 1
-    elif ((pred_y[i]>0.001) and (pred_y[i]<0.01) and (test_y_df.iloc[i,0]>0.001) and (test_y_df.iloc[i,0]<0.01)):
-        up_00_1 += 1
-    elif ((pred_y[i]>0.01) and (pred_y[i]<0.05) and (test_y_df.iloc[i,0]>0.01) and (test_y_df.iloc[i,0]<0.05)):
-        up_1_5 += 1
-    elif ((pred_y[i]>0.05) and (test_y_df.iloc[i,0]>0.05)):
-        up_5 += 1
-    elif ((pred_y[i]<0) and (pred_y[i]>-0.001) and (test_y_df.iloc[i,0]<0) and (test_y_df.iloc[i,0]>-0.001)):
-        down_0_00 += 1
-    elif ((pred_y[i]<-0.001) and (pred_y[i]>-0.01) and (test_y_df.iloc[i,0]<-0.001) and (test_y_df.iloc[i,0]>-0.01)):
-        down_00_1 += 1
-    elif ((pred_y[i]<-0.01) and (pred_y[i]>-0.05) and (test_y_df.iloc[i,0]<-0.01) and (test_y_df.iloc[i,0]>-0.05)):
-        down_1_5 += 1
-    elif ((pred_y[i]<-0.05)  and (test_y_df.iloc[i,0]<-0.05)):
-        down_5 += 1
+    print('explanined variance train: %.3f, test: %.3f' % (
+            explained_variance_score(y_train, y_train_pred),
+            explained_variance_score(y_test, y_test_pred)))
+    return [df.index[len(df)-1],y_test_pred]
 
-    
-    if ((pred_y[i]>0) and (test_y_df.iloc[i,0]>0)):
-        up_dir += 1
-    elif ((pred_y[i]<0) and (test_y_df.iloc[i,0]<0)):
-        down_dir += 1
-
-
-up_dir_y = 0
-down_dir_y = 0
-up_0_00_y=0
-up_00_1_y=0
-up_1_5_y=0
-up_5_y=0
-down_0_00_y=0
-down_00_1_y=0
-down_1_5_y=0
-down_5_y=0
-for i in test_y_df.iloc[:,0]:
-    if i>0 and i<0.001:
-        up_0_00_y+=1
-    elif i>0.001 and i<0.01:
-        up_00_1_y+=1
-    elif i>0.01 and i<0.05:
-        up_1_5_y+=1
-    elif i>0.05:
-        up_5_y+=1
-    elif i<0 and i>-0.001:
-        down_0_00_y+=1 
-    elif i<-0.001 and i>-0.01:
-        down_00_1_y+=1 
-    elif i<-0.01 and i>-0.05:
-        down_1_5_y+=1 
-    elif i<-0.05:
-        down_5_y+=1 
-    if i > 0:
-        up_dir_y += 1
+def position(pred_y):
+    index_y=pred_y[0]
+    pred_y=pred_y[1]
+    f = open("tempsave.csv", "a")
+    f.write("\n")
+    q1signal=np.quantile(pred_y,0.25)-0.000001
+    print('q1:',q1signal)
+    lastsignal=pred_y[len(pred_y)-1]
+    print('pred',lastsignal)
+    def risk(val,q1signal):
+        if val >q1signal:
+            return 1
+        elif val>0:
+            return 0.75
+        else:
+            return 2
+    riskToSpy=(len(pred_y)-1)/sum([risk(n,q1signal) for n in pred_y])
+    if (lastsignal>q1signal and lastsignal>0.000001):
+        f.write(index_y+','+str(riskToSpy))
+        f.close()
+        return [index_y,riskToSpy]
+    elif(lastsignal>0.000001):
+        f.write(index_y+','+str(0.75*riskToSpy))
+        f.close()
+        return [index_y,0.75*riskToSpy]
+    elif(lastsignal>0):
+        f.write(index_y+','+str(0))
+        f.close()
+        return [index_y,0]
     else:
-        down_dir_y += 1
-        
-pre_up_dir_y = 0
-pre_down_dir_y = 0
-pre_up_0_000_y=0
-pre_up_000_00_y=0
-pre_up_00_1_y=0
-pre_up_1_5_y=0
-pre_up_5_y=0
-pre_down_0_000_y=0
-pre_down_000_00_y=0
-pre_down_00_1_y=0
-pre_down_1_5_y=0
-pre_down_5_y=0
-for i in pred_y:
-    if i>0 and i<0.0001:
-        pre_up_0_000_y+=1
-    elif i>0.0001 and i<0.001:
-        pre_up_000_00_y+=1
-    elif i>0.001 and i<0.01:
-        pre_up_00_1_y+=1
-    elif i>0.01 and i<0.05:
-        pre_up_1_5_y+=1
-    elif i>0.05:
-        pre_up_5_y+=1
-    elif i<0 and i>-0.0001:
-        pre_down_0_000_y+=1 
-    elif i<-0.0001 and i>-0.001:
-        pre_down_000_00_y+=1 
-    elif i<-0.001 and i>-0.01:
-        pre_down_00_1_y+=1 
-    elif i<-0.01 and i>-0.05:
-        pre_down_1_5_y+=1 
-    elif i<-0.05:
-        pre_down_5_y+=1 
-    if i > 0:
-        pre_up_dir_y += 1
-    else:
-        pre_down_dir_y += 1
-    
+        f.write(index_y+','+str(-1))
+        f.close()
+        return [index_y,-1]
+
+df=readdata()
+ntrain=464
+ntest=len(df)-ntrain
+pred_y=[predict(df[i:ntrain+ntest+i],ntrain,ntest) for i in range(0,len(df)-ntrain,ntest)]
+pred_y=pd.DataFrame(pred_y[0][1].T)
+pred_y.index=df[ntrain:].index
+pred_y.to_csv('pred_y_rf_daily.csv',sep=',')
 
 
-pd.DataFrame(pred_y).to_csv('pred_y_rf.csv',sep=',')
-test_y_df.to_csv('test_y_df.csv',sep=',',header=None)
+
+
+df=df[598-450-100+1:]
+ntrain=450
+ntest=100
+pos_y=[position(predict(df[i:ntrain+ntest+i],ntrain,ntest)) for i in range(0,len(df)-ntrain-ntest,1)]
+pd.DataFrame(pos_y).to_csv('pos_y_rf_daily.csv',sep=',')
+
+#def plot(df,sellpoint,buypoint,start,last):
+#    newdf=copy.deepcopy(df)
+#    l1,=plt.plot(newdf['Close'][start:last],linewidth=1)
+#    plt.legend(handles=[l1],labels=['Close Price'],loc='best')
+#    for i in sellpoint:
+#        plt.plot(newdf.iloc[i,:].name,newdf['Close'][i],'rs',markersize=1.5)
+#        plt.annotate(str(newdf['Close'][i])[:5],xy=(newdf.iloc[i,:].name,newdf['Close'][i]),xytext=(newdf.iloc[i,:].name,newdf['Close'][i]+0.5),weight='ultralight')
+#    for i in buypoint:
+#        plt.plot(newdf.iloc[i,:].name,newdf['Close'][i],'ks',markersize=1.5)
+#        plt.annotate(str(newdf['Close'][i])[:5],xy=(newdf.iloc[i,:].name,newdf['Close'][i]),xytext=(newdf.iloc[i,:].name,newdf['Close'][i]+0.5),weight='ultralight')
+#    plt.show()
+#
+#plot(df,sellpoint,buypoint,250,1000)
