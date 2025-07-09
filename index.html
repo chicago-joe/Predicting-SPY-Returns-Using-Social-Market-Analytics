@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicting SPY Returns Using Social Market Analytics</title>
+    <meta name="description" content="Research on predicting SPY returns using social market analytics and machine learning">
+    <meta name="author" content="Your Name">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f6f8fa;
+            color: #24292e;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .nav-links {
+            background: white;
+            padding: 15px 0;
+            text-align: center;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        
+        .nav-links a {
+            margin: 0 20px;
+            color: #0366d6;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        .nav-links a:hover {
+            background-color: #f1f8ff;
+        }
+        
+        .pdf-container {
+            width: 100%;
+            height: calc(100vh - 160px);
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .pdf-embed {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .fallback {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            background: white;
+        }
+        
+        .download-btn {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin: 20px 10px;
+            transition: background-color 0.2s;
+        }
+        
+        .download-btn:hover {
+            background: #218838;
+        }
+        
+        .github-btn {
+            background: #24292e;
+        }
+        
+        .github-btn:hover {
+            background: #1b1f23;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.6em;
+            }
+            
+            .nav-links a {
+                margin: 5px 10px;
+                font-size: 0.9em;
+            }
+            
+            .pdf-container {
+                height: calc(100vh - 180px);
+            }
+        }
+        
+        .mobile-notice {
+            display: none;
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #ffeaa7;
+        }
+        
+        @media (max-width: 600px) {
+            .mobile-notice {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Predicting SPY Returns Using Social Market Analytics</h1>
+        <p>Machine Learning Research Paper</p>
+    </div>
+    
+    <div class="nav-links">
+        <a href="#" onclick="window.open('Predicting SPY Returns Using Social Market Analytics.pdf', '_blank')">📄 Download PDF</a>
+        <a href="https://github.com/chicago-joe/Predicting-SPY-Returns-Using-Social-Market-Analytics">📁 GitHub Repository</a>
+        <a href="https://github.com/chicago-joe/Predicting-SPY-Returns-Using-Social-Market-Analytics/tree/master/notebooks">📊 Notebooks</a>
+        <a href="mailto:connect@josephjloss.com">✉️ Contact</a>
+    </div>
+    
+    <div class="mobile-notice">
+        📱 For the best viewing experience on mobile, consider downloading the PDF
+    </div>
+    
+    <div class="pdf-container">
+        <embed 
+            src="Predicting SPY Returns Using Social Market Analytics.pdf" 
+            type="application/pdf" 
+            class="pdf-embed"
+            title="Predicting SPY Returns Using Social Market Analytics Research Paper">
+        </embed>
+    </div>
+    
+    <div class="fallback" id="fallback">
+        <h2>📄 Research Paper</h2>
+        <p>Your browser doesn't support embedded PDFs. Please download the paper to view it.</p>
+        <a href="Predicting SPY Returns Using Social Market Analytics.pdf" class="download-btn" download>
+            📥 Download PDF
+        </a>
+        <a href="https://github.com/chicago-joe/Predicting-SPY-Returns-Using-Social-Market-Analytics" class="download-btn github-btn">
+            📁 View on GitHub
+        </a>
+    </div>
+
+    <script>
+        // Check if PDF embedding is supported
+        function checkPDFSupport() {
+            const embed = document.querySelector('.pdf-embed');
+            const fallback = document.getElementById('fallback');
+            const container = document.querySelector('.pdf-container');
+            
+            // Simple check for PDF support
+            if (!navigator.mimeTypes['application/pdf']) {
+                container.style.display = 'none';
+                fallback.style.display = 'block';
+            }
+        }
+        
+        // Handle embed load errors
+        document.querySelector('.pdf-embed').addEventListener('error', function() {
+            document.querySelector('.pdf-container').style.display = 'none';
+            document.getElementById('fallback').style.display = 'block';
+        });
+        
+        // Check PDF support on load
+        window.addEventListener('load', checkPDFSupport);
+        
+        // Analytics (optional - replace with your tracking)
+        // gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+</body>
+</html>
