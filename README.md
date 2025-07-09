@@ -1,1 +1,4 @@
-## 📄 View Report: [Predicting SPY Returns Using Social Market Analytics](Predicting%20SPY%20Returns%20Using%20Social%20Market%20Analytics.pdf)
+
+
+https://github.com/user-attachments/assets/62cec666-b2c4-46d8-830f-047fa2efb62d
+
